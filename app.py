@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import cm
@@ -114,7 +114,7 @@ def generate_pdf(data, results, project_info):
     story.append(Paragraph("Elaborado por: xAI Engenharia Ltda.", body_style))
     story.append(Paragraph("Contato: contato@xaiengenharia.com", body_style))
     story.append(Spacer(1, 10*cm))  # Espaço para rodapé
-    story.append(Spacer(1, 0*cm, isPageBreak=True))  # Nova página
+    story.append(PageBreak())  # Nova página
 
     # Seção 1: Dados da Edificação
     story.append(Paragraph("1. Dados da Edificação", heading_style))
@@ -212,7 +212,7 @@ def generate_pdf(data, results, project_info):
     story.append(Paragraph("4. Cálculo do Fator S2 por Altura", heading_style))
     s2_table_data = [["z (m)", "S2"]]
     for z, s2 in results['s2_by_height'].items():
-        s2_table_data.append([过后, f"{z:.1f}", f"{s2:.6f}"])
+        s2_table_data.append([f"{z:.1f}", f"{s2:.6f}"])
     story.append(Paragraph("Tabela 4 – Fator S2 por Altura", table_title_style))
     s2_table = Table(s2_table_data, colWidths=[4*cm, 13*cm])
     s2_table.setStyle(TableStyle([
