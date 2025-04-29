@@ -8,14 +8,6 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import cm
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-
-# Registrar fonte Arial (se disponível no sistema ou embutida)
-try:
-    pdfmetrics.registerFont(TTFont('Arial', '/usr/share/fonts/truetype/msttcorefonts/Arial.ttf'))
-except:
-    pdfmetrics.registerFont(TTFont('Arial', 'Helvetica'))  # Fallback para Helvetica
 
 # Função para criar figura das zonas de pressão
 def create_pressure_zones_image():
@@ -64,7 +56,7 @@ def calculate_dp(ce, cpi, q):
 # Função para adicionar rodapé
 def add_footer(canvas, doc):
     canvas.saveState()
-    canvas.setFont('Arial', 8)
+    canvas.setFont('Helvetica', 8)
     footer_text = "xAI Engenharia Ltda. | Relatório técnico – não substitui projeto executivo | Conforme NBR 6123:2023"
     canvas.drawCentredString(A4[0]/2, 1*cm, footer_text)
     canvas.drawString(A4[0] - 3*cm, 1*cm, f"Página {doc.page}")
@@ -85,10 +77,10 @@ def generate_pdf(data, results, project_info):
     styles = getSampleStyleSheet()
 
     # Estilos personalizados
-    title_style = ParagraphStyle(name='Title', fontName='Arial', fontSize=14, leading=16, alignment=1, spaceAfter=12, textTransform='uppercase', bold=True)
-    heading_style = ParagraphStyle(name='Heading', fontName='Arial', fontSize=12, leading=14, spaceAfter=10, bold=True, textTransform='uppercase')
-    body_style = ParagraphStyle(name='Body', fontName='Arial', fontSize=10, leading=12)
-    table_title_style = ParagraphStyle(name='TableTitle', fontName='Arial', fontSize=10, leading=12, spaceAfter=6, bold=True)
+    title_style = ParagraphStyle(name='Title', fontName='Helvetica', fontSize=14, leading=16, alignment=1, spaceAfter=12, textTransform='uppercase', bold=True)
+    heading_style = ParagraphStyle(name='Heading', fontName='Helvetica', fontSize=12, leading=14, spaceAfter=10, bold=True, textTransform='uppercase')
+    body_style = ParagraphStyle(name='Body', fontName='Helvetica', fontSize=10, leading=12)
+    table_title_style = ParagraphStyle(name='TableTitle', fontName='Helvetica', fontSize=10, leading=12, spaceAfter=6, bold=True)
 
     story = []
 
@@ -111,7 +103,7 @@ def generate_pdf(data, results, project_info):
     project_table = Table(project_data, colWidths=[5*cm, 12*cm])
     project_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'LEFT'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -131,7 +123,7 @@ def generate_pdf(data, results, project_info):
         ["Comprimento (a)", f"{data['length']:.2f} m"],
         ["Largura (b)", f"{data['width']:.2f} m"],
         ["Pé-Direito (h)", f"{data['height']:.2f} m"],
-        ["Inclinação da Cobertura", f"{data['slope']:.2f}% ({np.arctan(data['slope']/100)*180/np.pi:.2f}°)"],  # Corrigido para evitar unidade no valor
+        ["Inclinação da Cobertura", f"{data['slope']:.2f}% ({np.arctan(data['slope']/100)*180/np.pi:.2f}°)"],
         ["Altura Média - Fechamento (Z)", f"{data['z_fechamento']:.2f} m"],
         ["Altura Média - Cobertura (Z)", f"{data['z_cobertura']:.2f} m"],
         ["Distância Entre Pórticos", f"{data['portico_distance']:.2f} m"],
@@ -145,7 +137,7 @@ def generate_pdf(data, results, project_info):
     building_table = Table(building_data, colWidths=[8*cm, 9*cm])
     building_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'LEFT'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -167,7 +159,7 @@ def generate_pdf(data, results, project_info):
     fr_table = Table(fr_table_data, colWidths=[4*cm, 4*cm, 4*cm, 4*cm])
     fr_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -198,7 +190,7 @@ def generate_pdf(data, results, project_info):
     meteo_table = Table(meteo_table_data, colWidths=[3*cm, 3*cm, 3*cm, 3*cm, 3*cm, 3*cm])
     meteo_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -220,12 +212,12 @@ def generate_pdf(data, results, project_info):
     story.append(Paragraph("4. Cálculo do Fator S2 por Altura", heading_style))
     s2_table_data = [["z (m)", "S2"]]
     for z, s2 in results['s2_by_height'].items():
-        s2_table_data.append([f"{z:.1f}", f"{s2:.6f}"])
+        s2_table_data.append([过后, f"{z:.1f}", f"{s2:.6f}"])
     story.append(Paragraph("Tabela 4 – Fator S2 por Altura", table_title_style))
     s2_table = Table(s2_table_data, colWidths=[4*cm, 13*cm])
     s2_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -260,7 +252,7 @@ def generate_pdf(data, results, project_info):
     vk_q_table = Table(vk_q_table_data, colWidths=[3*cm, 3*cm, 3*cm, 3*cm, 3*cm, 3*cm])
     vk_q_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -281,7 +273,7 @@ def generate_pdf(data, results, project_info):
     s2_params_table = Table(s2_params_table_data, colWidths=[4*cm, 4*cm, 4*cm, 4*cm])
     s2_params_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -305,7 +297,7 @@ def generate_pdf(data, results, project_info):
     x1_table = Table(x1_table_data, colWidths=[2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm])
     x1_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -329,7 +321,7 @@ def generate_pdf(data, results, project_info):
     x2_table = Table(x2_table_data, colWidths=[2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm])
     x2_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -353,7 +345,7 @@ def generate_pdf(data, results, project_info):
     s2_table = Table(s2_data, colWidths=[6*cm, 5.5*cm, 5.5*cm])
     s2_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -373,7 +365,7 @@ def generate_pdf(data, results, project_info):
     vk_table = Table(vk_data, colWidths=[6*cm, 5.5*cm, 5.5*cm])
     vk_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -394,7 +386,7 @@ def generate_pdf(data, results, project_info):
     q_table = Table(q_data, colWidths=[6*cm, 5.5*cm, 5.5*cm])
     q_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -429,7 +421,7 @@ def generate_pdf(data, results, project_info):
     ce_table = Table(ce_table_data, colWidths=[1.5*cm] + [1.5*cm]*10)
     ce_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 8),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -464,7 +456,7 @@ def generate_pdf(data, results, project_info):
     ce_selected_table = Table(ce_selected_data, colWidths=[6*cm, 5.5*cm, 5.5*cm])
     ce_selected_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -493,7 +485,7 @@ def generate_pdf(data, results, project_info):
         dp_table = Table(dp_table_data, colWidths=[4*cm, 4*cm, 9*cm])
         dp_table.setStyle(TableStyle([
             ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-            ('FONTNAME', (0,0), (-1,-1), 'Arial'),
+            ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
             ('FONTSIZE', (0,0), (-1,-1), 10),
             ('ALIGN', (0,0), (-1,-1), 'CENTER'),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
