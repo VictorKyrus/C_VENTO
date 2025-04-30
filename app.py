@@ -925,4 +925,12 @@ for direction, dp_data in dp_results.items():
 # Botão para gerar e baixar o relatório
 if st.button("Gerar Relatório PDF"):
     pdf_buffer = generate_pdf(data, results, project_info)
-    st.download_button
+    st.download_button(
+        label="Baixar Relatório PDF",
+        data=pdf_buffer,
+        file_name="relatorio_vento.pdf",
+        mime="application/pdf",
+        on_click="ignore",
+        icon=":material/download:",
+        type="primary"
+    )
