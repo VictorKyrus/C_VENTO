@@ -128,6 +128,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(summary_table)
     story.append(Spacer(1, 1*cm))
@@ -163,6 +164,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(project_table)
     story.append(Spacer(1, 10*cm))  # Espaço para rodapé
@@ -200,6 +202,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(building_table)
     story.append(Spacer(1, 0.5*cm))
@@ -226,6 +229,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(fr_table)
     story.append(Spacer(1, 0.5*cm))
@@ -268,6 +272,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(meteo_table)
     story.append(Spacer(1, 0.5*cm))
@@ -298,6 +303,8 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('WORDWRAP', (0,0), (-1,-1), 'CJK'),  # Permite quebra de linha automática
     ]))
     story.append(s3_table)
     story.append(Spacer(1, 0.5*cm))
@@ -321,6 +328,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(s2_table)
     story.append(Spacer(1, 0.5*cm))
@@ -357,6 +365,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(vk_q_table)
     story.append(Spacer(1, 0.5*cm))
@@ -382,6 +391,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(s2_params_table)
     story.append(Spacer(1, 0.5*cm))
@@ -417,6 +427,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(x1_table)
     story.append(Spacer(1, 0.5*cm))
@@ -452,6 +463,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(x2_table)
     story.append(Spacer(1, 0.5*cm))
@@ -480,6 +492,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(s2_table)
     story.append(Spacer(1, 0.5*cm))
@@ -504,6 +517,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(vk_table)
     story.append(Spacer(1, 0.5*cm))
@@ -529,6 +543,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(q_table)
     story.append(Spacer(1, 0.5*cm))
@@ -538,15 +553,15 @@ def generate_pdf(data, results, project_info):
     ce_table_data = [
         ["θ (°)", "Valores de Ce para ângulo de incidência do vento α"],
         ["", "90°", "", "45°", "", "0°", "", "-45°", "", "-90°", ""],
-        ["", "H e I", "L e J", "H", "L", "H e Lᵃ", "H e Lᵇ", "H", "L", "H e I", "L e J"],
+        ["", "H e I", "L e J", "H", "L", "H e L a", "H e L b", "H", "L", "H e I", "L e J"],
         ["5", "-1,0", "-0,5", "-1,0", "-0,9", "-1,0", "-0,5", "-0,9", "-1,0", "-0,5", "-1,0"],
         ["10", "-1,0", "-0,5", "-1,0", "-0,8", "-1,0", "-0,5", "-0,8", "-1,0", "-0,4", "-1,0"],
         ["15", "-0,9", "-0,5", "-1,0", "-0,7", "-1,0", "-0,5", "-0,6", "-1,0", "-0,3", "-1,0"],
-        ["20 Bump ", "-0,8", "-0,5", "-1,0", "-0,6", "-0,9", "-0,5", "-0,5", "-1,0", "-0,2", "-1,0"],
+        ["20 Bump", "-0,8", "-0,5", "-1,0", "-0,6", "-0,9", "-0,5", "-0,5", "-1,0", "-0,2", "-1,0"],
         ["25", "-0,7", "-0,5", "-1,0", "-0,6", "-0,8", "-0,5", "-0,3", "-0,9", "-0,1", "-0,9"],
         ["30", "-0,5", "-0,5", "-1,0", "-0,6", "-0,8", "-0,5", "-0,1", "-0,8", "0,0", "-0,6"],
         ["θ (°)", "Ce médio"],
-        ["", "H₁", "H₂", "L₁", "L₂", "H₆"],
+        ["", "H 1", "H 2", "L 1", "L 2", "H 6"],
         ["5", "-2,0", "-1,5", "-2,0", "-1,5", "-2,0"],
         ["10", "-2,0", "-1,5", "-2,0", "-1,5", "-2,0"],
         ["15", "-1,8", "-0,9", "-1,8", "-1,4", "-2,0"],
@@ -574,6 +589,8 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('WORDWRAP', (0,0), (-1,-1), 'CJK'),  # Permite quebra de linha automática
     ]))
     story.append(ce_table)
     story.append(Spacer(1, 0.5*cm))
@@ -590,8 +607,8 @@ def generate_pdf(data, results, project_info):
     story.append(Paragraph("15. Coeficientes de Pressão Externa (Ce) Selecionados", heading_style))
     ce_selected_data = [
         ["Direção do Vento", "Fechamento", "Cobertura"],
-        ["0º/180º (Longitudinal)", ", ".join(map(lambda x: format_with_comma(x), data['ce_fechamento_0'])), ", ".join(map(lambda x: format_with_comma(x), data['ce_cobertura_0']))],
-        ["90º/270º (Transversal)", ", ".join(map(lambda x: format_with_comma(x), data['ce_fechamento_90'])), ", ".join(map(lambda x: format_with_comma(x), data['ce_cobertura_90']))],
+        ["0°/180° (Longitudinal)", ", ".join(map(lambda x: format_with_comma(x), data['ce_fechamento_0'])), ", ".join(map(lambda x: format_with_comma(x), data['ce_cobertura_0']))],
+        ["90°/270° (Transversal)", ", ".join(map(lambda x: format_with_comma(x), data['ce_fechamento_90'])), ", ".join(map(lambda x: format_with_comma(x), data['ce_cobertura_90']))],
     ]
     story.append(Paragraph("Tabela 14 – Coeficientes de Pressão Externa (Ce) Selecionados", table_title_style))
     ce_selected_table = Table(ce_selected_data, colWidths=[6*cm, 5.5*cm, 5.5*cm])
@@ -607,6 +624,8 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('WORDWRAP', (0,0), (-1,-1), 'CJK'),  # Permite quebra de linha automática
     ]))
     story.append(ce_selected_table)
     story.append(Spacer(1, 0.5*cm))
@@ -640,6 +659,7 @@ def generate_pdf(data, results, project_info):
             ('BOX', (0,0), (-1,-1), 0.5, colors.black),
             ('LEFTPADDING', (0,0), (-1,-1), 10),
             ('RIGHTPADDING', (0,0), (-1,-1), 10),
+            ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
         ]))
         story.append(dp_table)
         story.append(Spacer(1, 0.5*cm))
@@ -687,6 +707,7 @@ def generate_pdf(data, results, project_info):
         ('BOX', (0,0), (-1,-1), 0.5, colors.black),
         ('LEFTPADDING', (0,0), (-1,-1), 10),
         ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
     story.append(legend_table)
     story.append(Spacer(1, 0.5*cm))
@@ -801,10 +822,10 @@ st.subheader("Coeficientes de Pressão Externa (Ce)")
 st.write("Zonas de Pressão Externa (Figura 1 - NBR 6123:2023):")
 pressure_zones_img = create_pressure_zones_image()
 st.image(pressure_zones_img, caption="Zonas de Pressão Externa (H, L, I, J)")
-ce_fechamento_0 = st.multiselect("Ce - Fechamento (0º/180º)", [-0.9, -0.4625, -0.2820, -0.425, 0.7], default=[-0.9, -0.4625, -0.2820, -0.425, 0.7])
-ce_fechamento_90 = st.multiselect("Ce - Fechamento (90º/270º)", [-0.9, -0.5, -0.5375], default=[-0.9, -0.5, -0.5375])
-ce_cobertura_0 = st.multiselect("Ce - Cobertura (0º/180º)", [-0.9, -0.6, -0.325, 0.7], default=[-0.9, -0.6, -0.325, 0.7])
-ce_cobertura_90 = st.multiselect("Ce - Cobertura (90º/270º)", [-0.9284, -0.6, -0.5375], default=[-0.9284, -0.6, -0.5375])
+ce_fechamento_0 = st.multiselect("Ce - Fechamento (0°/180°)", [-0.9, -0.4625, -0.2820, -0.425, 0.7], default=[-0.9, -0.4625, -0.2820, -0.425, 0.7])
+ce_fechamento_90 = st.multiselect("Ce - Fechamento (90°/270°)", [-0.9, -0.5, -0.5375], default=[-0.9, -0.5, -0.5375])
+ce_cobertura_0 = st.multiselect("Ce - Cobertura (0°/180°)", [-0.9, -0.6, -0.325, 0.7], default=[-0.9, -0.6, -0.325, 0.7])
+ce_cobertura_90 = st.multiselect("Ce - Cobertura (90°/270°)", [-0.9284, -0.6, -0.5375], default=[-0.9284, -0.6, -0.5375])
 
 # Cálculos
 s2_fechamento = calculate_s2(z_fechamento, bm, p, fr)
@@ -816,27 +837,27 @@ q_cobertura_nm2, q_cobertura_kgfm2 = calculate_q(vk_cobertura)
 
 # Pressões efetivas
 dp_results = {
-    "0º/180º - Fechamento": [],
-    "0º/180º - Cobertura": [],
-    "90º/270º - Fechamento": [],
-    "90º/270º - Cobertura": [],
+    "0°/180° - Fechamento": [],
+    "0°/180° - Cobertura": [],
+    "90°/270° - Fechamento": [],
+    "90°/270° - Cobertura": [],
 }
 for ce in ce_fechamento_0:
     for cpi_val in cpi:
         dp = calculate_dp(ce, cpi_val, q_fechamento_kgfm2)
-        dp_results["0º/180º - Fechamento"].append((ce, cpi_val, dp))
+        dp_results["0°/180° - Fechamento"].append((ce, cpi_val, dp))
 for ce in ce_cobertura_0:
     for cpi_val in cpi:
         dp = calculate_dp(ce, cpi_val, q_cobertura_kgfm2)
-        dp_results["0º/180º - Cobertura"].append((ce, cpi_val, dp))
+        dp_results["0°/180° - Cobertura"].append((ce, cpi_val, dp))
 for ce in ce_fechamento_90:
     for cpi_val in cpi:
         dp = calculate_dp(ce, cpi_val, q_fechamento_kgfm2)
-        dp_results["90º/270º - Fechamento"].append((ce, cpi_val, dp))
+        dp_results["90°/270° - Fechamento"].append((ce, cpi_val, dp))
 for ce in ce_cobertura_90:
     for cpi_val in cpi:
         dp = calculate_dp(ce, cpi_val, q_cobertura_kgfm2)
-        dp_results["90º/270º - Cobertura"].append((ce, cpi_val, dp))
+        dp_results["90°/270° - Cobertura"].append((ce, cpi_val, dp))
 
 # Resultados
 results = {
@@ -904,9 +925,4 @@ for direction, dp_data in dp_results.items():
 # Botão para gerar e baixar o relatório
 if st.button("Gerar Relatório PDF"):
     pdf_buffer = generate_pdf(data, results, project_info)
-    st.download_button(
-        label="Baixar Relatório PDF",
-        data=pdf_buffer,
-        file_name="relatorio_vento.pdf",
-        mime="application/pdf",
-    )
+    st.download_button
