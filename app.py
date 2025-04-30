@@ -1,8 +1,15 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from weasyprint import HTML
 import base64
+
+# Tentar importar weasyprint, mas lidar com o erro no Streamlit Cloud
+try:
+    from weasyprint import HTML
+    WEASYPRINT_AVAILABLE = True
+except Exception as e:
+    WEASYPRINT_AVAILABLE = False
+    st.warning("A exportação para PDF não está disponível neste ambiente (Streamlit Cloud). Use a exportação em HTML ou execute localmente para gerar PDFs.")
 
 # Função para formatar números com vírgula (padrão brasileiro)
 def format_with_comma(value):
@@ -229,9 +236,23 @@ def generate_html_report():
     """
     return html_content
 
-# Botão para exportar o relatório
-if st.button("Exportar Relatório para PDF"):
+# Exportação para HTML
+st.subheader("Exportar Relatório")
+if st.button("Exportar Relatório para HTML"):
     html_content = generate_html_report()
-    HTML(string=html_content).write_pdf("Relatório_Vento.pdf")
-    with open("Relatório_Vento.pdf", "rb") as file:
-        st.download_button("Baixar PDF", file, file_name="Relatório_Vento.pdf")
+    st.download_button(
+        label="Baixar HTML",
+        data=html_content,
+        file_name="Relatório_Vento.html",
+        mime="text/html"
+    )
+
+# Exportação para PDF (se weasyprint estiver disponível)
+if WEASYPRINT_AVAILABLE:
+    if st.button("Exportar Relatório para PDF"):
+        html_content = generate_html_report()
+        HTML(string=html_content).write_pdf("Relatório_Vento.pdf")
+        with open("Relatório_Vento.pdf", "rb") as file:
+            st.download_button("Baixar PDF", file, file_name="Relatório_Vento.pdf")
+else:
+    st.info("Exportação para PDF não disponível. Execute o aplicativo localmente e instale as dependências necessárias (veja o README para instruções).")
