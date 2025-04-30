@@ -15,26 +15,29 @@ def format_with_comma(value):
 
 # Função para criar figura das zonas de pressão
 def create_pressure_zones_image():
-    fig, ax = plt.subplots(figsize=(6, 2))
+    fig, ax = plt.subplots(figsize=(8, 3), dpi=100)
     ax.set_xlim(0, 10)
     ax.set_ylim(0, 4)
     ax.set_aspect('equal')
     # Desenhar retângulo principal (planta da cobertura)
-    ax.add_patch(plt.Rectangle((0, 0), 10, 4, fill=False, edgecolor='black'))
+    ax.add_patch(plt.Rectangle((0, 0), 10, 4, fill=False, edgecolor='black', linewidth=1.5))
     # Linha divisória para zona H (b/2)
-    ax.plot([5, 5], [0, 4], 'k--')
+    ax.plot([5, 5], [0, 4], 'k--', linewidth=1, color='gray')
     # Linha divisória para zonas I/J
-    ax.plot([8, 8], [0, 4], 'k--')
-    # Rótulos das zonas
-    ax.text(2.5, 2, 'H', fontsize=12, ha='center', va='center', color='blue')
-    ax.text(6.5, 2, 'L', fontsize=12, ha='center', va='center', color='blue')
-    ax.text(9, 2, 'I/J', fontsize=12, ha='center', va='center', color='blue')
+    ax.plot([8, 8], [0, 4], 'k--', linewidth=1, color='gray')
+    # Rótulos das zonas com fundo branco e borda
+    ax.text(2.5, 2, 'H', fontsize=14, ha='center', va='center', color='darkblue',
+            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
+    ax.text(6.5, 2, 'L', fontsize=14, ha='center', va='center', color='darkblue',
+            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
+    ax.text(9, 2, 'I/J', fontsize=14, ha='center', va='center', color='darkblue',
+            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.set_xlabel('Planta da Cobertura (Zonas de Pressão Externa)')
+    ax.set_xlabel('Planta da Cobertura (Zonas de Pressão Externa)', fontsize=10, labelpad=10)
     plt.tight_layout()
     buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight')
+    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
     plt.close()
     buf.seek(0)
     return buf
@@ -255,7 +258,7 @@ def generate_pdf(data, results, project_info):
         ('SPAN', (1,0), (1,1)),
         ('SPAN', (2,0), (2,1)),
         ('SPAN', (0,2), (0,3)),
-        ('SPAN', (0,4), (0,5)),
+        ['SPAN', (0,4), (0,5)),
         ('SPAN', (0,6), (0,7)),
         ('SPAN', (0,8), (0,9)),
         ('SPAN', (0,10), (0,11)),
@@ -326,23 +329,20 @@ def generate_pdf(data, results, project_info):
     story.append(Paragraph("6. Velocidades e Pressões Características", heading_style))
     vk_q_table_data = [
         ["z (m)", "S₁", "S₂", "S₃", "Vₖ (m/s)", "q (kN/m²)"],
-        ["0", "1,00", "0,92", "", "38,64", "0,915"],
-        ["5", "1,00", "0,92", "", "38,64", "0,915"],
-        ["10", "1,00", "0,98", "", "41,16", "1,039"],
-        ["15", "1,00", "1,02", "", "42,84", "1,125"],
-        ["20", "1,00", "1,04", "", "43,68", "1,17"],
-        ["25", "1,00", "1,06", "", "44,52", "1,215"],
-        ["30", "1,00", "1,08", "", "45,36", "1,261"],
-        ["35", "1,00", "1,10", "", "46,20", "1,308"],
-        ["40", "1,00", "1,11", "", "46,62", "1,332"],
-        ["45", "1,00", "1,12", "", "47,04", "1,356"],
-        ["50", "1,00", "1,13", "", "47,46", "1,381"],
-        ["55", "1,00", "1,14", "", "47,88", "1,405"],
-        ["60", "1,00", "1,15", "", "48,30", "1,43"],
-        ["65", "1,00", "1,16", "", "48,72", "1,455"],
-        ["70", "1,00", "1,17", "", "49,14", "1,48"],
-        ["75", "1,00", "1,17", "", "49,14", "1,48"],
     ]
+    s1 = data['s1']
+    s3 = data['s3']
+    for z, s2 in results['s2_by_height'].items():
+        vk = calculate_vk(data['v0'], s1, s2, s3)
+        q_nm2, _ = calculate_q(vk)
+        vk_q_table_data.append([
+            f"{z:.1f}".replace(".", ","), 
+            f"{s1:.2f}".replace(".", ","), 
+            f"{s2:.2f}".replace(".", ","), 
+            f"{s3:.2f}".replace(".", ","), 
+            f"{vk:.2f}".replace(".", ","), 
+            f"{q_nm2/1000:.3f}".replace(".", ",")
+        ])
     story.append(Paragraph("Tabela 6 – Velocidades e Pressões Características – NBR 6123:2023", table_title_style))
     vk_q_table = Table(vk_q_table_data, colWidths=[3*cm, 3*cm, 3*cm, 3*cm, 3*cm, 3*cm])
     vk_q_table.setStyle(TableStyle([
@@ -389,15 +389,20 @@ def generate_pdf(data, results, project_info):
     # Seção 8: Tabela 8 - Pressões na Direção X1
     story.append(Paragraph("8. Pressões de Vento na Direção X1", heading_style))
     x1_table_data = [
-        ["Altura z (m)", "Velocidade V₀ (m/s)", "Fator S₁", "Fator S₂", "Fator S₃", "Velocidade Vₖ (m/s)", "Pressão q (kN/m²)"],
-        ["5", "42,00", "", "0,82", "", "34,44", "0,727"],
-        ["10", "42,00", "", "0,88", "", "36,96", "0,837"],
-        ["15", "42,00", "", "0,92", "", "38,64", "0,915"],
-        ["20", "42,00", "", "0,95", "", "39,90", "0,976"],
-        ["25", "42,00", "", "0,97", "", "40,74", "1,017"],
+        ["Altura z (m)", "Fator S₂", "Velocidade Vₖ (m/s)", "Pressão q (kN/m²)"],
     ]
+    for z in [5, 10, 15, 20, 25]:
+        s2 = results['s2_by_height'][z]
+        vk = calculate_vk(data['v0'], data['s1'], s2, data['s3'])
+        q_nm2, _ = calculate_q(vk)
+        x1_table_data.append([
+            f"{z:.1f}".replace(".", ","), 
+            f"{s2:.2f}".replace(".", ","), 
+            f"{vk:.2f}".replace(".", ","), 
+            f"{q_nm2/1000:.3f}".replace(".", ",")
+        ])
     story.append(Paragraph("Tabela 8 – Pressões de Vento na Direção X1 – NBR 6123:2023", table_title_style))
-    x1_table = Table(x1_table_data, colWidths=[2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm])
+    x1_table = Table(x1_table_data, colWidths=[4*cm, 4*cm, 4*cm, 4*cm])
     x1_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
@@ -417,15 +422,20 @@ def generate_pdf(data, results, project_info):
     # Seção 9: Tabela 9 - Pressões na Direção X2
     story.append(Paragraph("9. Pressões de Vento na Direção X2", heading_style))
     x2_table_data = [
-        ["Altura z (m)", "Velocidade V₀ (m/s)", "Fator S₁", "Fator S₂", "Fator S₃", "Velocidade Vₖ (m/s)", "Pressão q (kN/m²)"],
-        ["5", "42,00", "", "0,82", "", "34,44", "0,727"],
-        ["10", "42,00", "", "0,88", "", "36,96", "0,837"],
-        ["15", "42,00", "", "0,92", "", "38,64", "0,915"],
-        ["20", "42,00", "", "0,95", "", "39,90", "0,976"],
-        ["25", "42,00", "", "0,97", "", "40,74", "1,017"],
+        ["Altura z (m)", "Fator S₂", "Velocidade Vₖ (m/s)", "Pressão q (kN/m²)"],
     ]
+    for z in [5, 10, 15, 20, 25]:
+        s2 = results['s2_by_height'][z]
+        vk = calculate_vk(data['v0'], data['s1'], s2, data['s3'])
+        q_nm2, _ = calculate_q(vk)
+        x2_table_data.append([
+            f"{z:.1f}".replace(".", ","), 
+            f"{s2:.2f}".replace(".", ","), 
+            f"{vk:.2f}".replace(".", ","), 
+            f"{q_nm2/1000:.3f}".replace(".", ",")
+        ])
     story.append(Paragraph("Tabela 9 – Pressões de Vento na Direção X2 – NBR 6123:2023", table_title_style))
-    x2_table = Table(x2_table_data, colWidths=[2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm])
+    x2_table = Table(x2_table_data, colWidths=[4*cm, 4*cm, 4*cm, 4*cm])
     x2_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
