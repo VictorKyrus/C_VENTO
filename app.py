@@ -383,7 +383,7 @@ def generate_pdf(data, results, project_info):
     return buffer
 
 # Interface do Streamlit
-# Adicionar CSS personalizado (inspirado no site da TQS)
+# Adicionar CSS personalizado (inspirado no site da TQS, com botão ajustado)
 st.markdown("""
     <style>
     /* Estilo geral para uma aparência minimalista */
@@ -434,15 +434,15 @@ st.markdown("""
         border-color: #003087; /* Azul escuro da TQS */
     }
     .stButton > button {
-        background-color: #003087; /* Azul escuro da TQS */
-        color: white;
+        background-color: #d3d3d3; /* Cinza claro */
+        color: #000000; /* Texto preto */
         border-radius: 5px;
         padding: 10px 20px;
         border: none;
         font-size: 16px;
     }
     .stButton > button:hover {
-        background-color: #002060; /* Tom mais escuro para hover */
+        background-color: #b0b0b0; /* Cinza um pouco mais escuro para hover */
     }
     /* Garantir que todo texto seja visível */
     div, p, label, span, input, select {
