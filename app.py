@@ -27,7 +27,7 @@ def calculate_s2(z, v0, category, class_):
     p = p_dict[category]
     fr = fr_dict[class_]
     
-    s2 = bm * (z / 10) ** p * fr if z > 0 else 0  # S2 é 0 para z = 0
+    s2 = bm * (z / 10) ** p * fr if z > 0 else 0
     return s2, bm, p, fr
 
 # Função para criar gráfico de velocidade do vento em função da altura
@@ -50,24 +50,19 @@ def create_velocity_height_graph(z_values, vk_values):
 # Função para adicionar cabeçalho e rodapé
 def add_header_footer(canvas, doc):
     canvas.saveState()
-    
-    # Cabeçalho
     canvas.setFont("Helvetica-Bold", 12)
     canvas.setFillColor(colors.darkblue)
     canvas.drawString(2*cm, A4[1] - 1.5*cm, "Memorial de Cálculo - Ações do Vento (NBR 6123:2023)")
     canvas.line(2*cm, A4[1] - 1.8*cm, A4[0] - 2*cm, A4[1] - 1.8*cm)
-    
-    # Rodapé
     canvas.setFont("Helvetica", 8)
     canvas.setFillColor(colors.grey)
     page_num = canvas.getPageNumber()
     footer_text = f"Página {page_num} | Data: {datetime.now().strftime('%d/%m/%Y')}"
     canvas.drawString(2*cm, 1*cm, footer_text)
     canvas.line(2*cm, 1.3*cm, A4[0] - 2*cm, 1.3*cm)
-    
     canvas.restoreState()
 
-# Função para gerar o PDF (com tabela de Velocidades e Pressões Características dinâmica)
+# Função para gerar o PDF
 def generate_pdf(data, results, project_info, uploaded_image=None):
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -80,7 +75,7 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     )
     story = []
 
-    # Estilos atualizados
+    # Estilos
     heading_style = ParagraphStyle(
         name='Heading',
         fontName='Helvetica-Bold',
@@ -109,16 +104,6 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
         fontSize=10,
         textColor=colors.darkblue,
         spaceAfter=6
-    )
-    description_style = ParagraphStyle(
-        name='DescriptionStyle',
-        fontName='Helvetica',
-        fontSize=8,
-        leading=9,
-        alignment=0,
-        spaceAfter=0,
-        leftIndent=0,
-        textColor=colors.black
     )
 
     # Seção 1: Informações do Projeto
@@ -235,11 +220,10 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     story.append(vk_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 6: Velocidades e Pressões Características (Tabela Dinâmica)
+    # Seção 6: Velocidades e Pressões Características
     story.append(Paragraph("6. Velocidades e Pressões Características", heading_style))
     story.append(Paragraph("Tabela 1 – Velocidades e Pressões Características – NBR 6123:2023", table_title_style))
     
-    # Gerar valores de z de 0 a 75 com incremento de 5
     z_values = np.arange(0, 76, 5)
     vp_data = [["z (m)", "S1", "S2", "S3", "Vk (m/s)", "q (kN/m²)"]]
     
@@ -248,7 +232,7 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
         s2, _, _, _ = calculate_s2(z, data['v0'], data['category'], data['class_'])
         s3 = data['s3']
         vk = data['v0'] * s1 * s2 * s3
-        q = 0.613 * vk**2 / 1000  # Convertendo de N/m² para kN/m²
+        q = 0.613 * vk**2 / 1000
         
         vp_data.append([
             format_with_comma(z, 1),
@@ -332,7 +316,7 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
         story.append(Spacer(1, 0.3*cm))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 10: Metodologia de Cálculo (Fórmulas)
+    # Seção 10: Metodologia de Cálculo
     story.append(Paragraph("10. Metodologia de Cálculo", heading_style))
     story.append(Paragraph("Velocidade Característica do Vento (Vk): Vk = V0 * S1 * S2 * S3", body_style))
     story.append(Paragraph("Fator S2: S2 = bm * (z/10)^p * Fr", body_style))
@@ -348,7 +332,7 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     story.append(Image(velocity_img, width=12*cm, height=8*cm))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 12: Imagem Inserida pelo Usuário (se houver)
+    # Seção 12: Imagem Inserida pelo Usuário
     if uploaded_image is not None:
         story.append(Paragraph("12. Imagem Inserida pelo Usuário", heading_style))
         image = PILImage.open(uploaded_image)
@@ -358,22 +342,62 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
         story.append(Image(img_buffer, width=12*cm, height=8*cm))
         story.append(Spacer(1, 0.5*cm))
 
-    # Finalizar o PDF com cabeçalho e rodapé
     doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
     buffer.seek(0)
     return buffer
 
+# Dados de cidades e velocidades de vento
+city_data = [
+    {"municipio": "ACRELÂNDIA", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "ASSIS BRASIL", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "BRASILÉIA", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "BUJARI", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "CAPIXABA", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "CRUZEIRO DO SUL", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "EPITACIOLÂNDIA", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "FEIJÓ", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "JORDÃO", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "MÂNCIO LIMA", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "MANOEL URBANO", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "MARECHAL THAUMATURGO", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "PLÁCIDO DE CASTRO", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "PORTO ACRE", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "PORTO WALTER", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "RIO BRANCO", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "RODRIGUES ALVES", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "SANTA ROSA DO PURUS", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "SENA MADUREIRA", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "SENADOR GUIOMARD", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "TARAUACÁ", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "XAPURI", "estado": "ACRE", "isopleta": "30 m/s"},
+    {"municipio": "ÁGUA BRANCA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "ANADIA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "ARAPIRACA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "ATALAIA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "BARRA DE SANTO ANTONIO", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "BARRA DE SÃO MIGUEL", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "BATALHA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "BELÉM", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "BELO MONTE", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "BOCA DA MATA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "BRANQUINHA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "CACIMBINHAS", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "CAJUEIRO", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "CAMPESTRE", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "CAMPO ALEGRE", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "CAMPO GRANDE", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    {"municipio": "CANAPI", "estado": "ALAGOAS", "isopleta": "30 m/s"}
+]
+
 # Interface do Streamlit
-# Adicionar CSS personalizado (inspirado no site da TQS, com botão ajustado)
 st.markdown("""
     <style>
-    /* Estilo geral para uma aparência minimalista */
     .stApp {
         background-color: #ffffff;
         font-family: 'Arial', sans-serif;
     }
     h1 {
-        color: #003087; /* Azul escuro da TQS */
+        color: #003087;
         text-align: center;
         font-size: 28px;
         margin-bottom: 20px;
@@ -383,7 +407,6 @@ st.markdown("""
         font-size: 20px;
         margin-bottom: 15px;
     }
-    /* Estilo dos cards */
     .card {
         background-color: #ffffff;
         border-radius: 8px;
@@ -394,11 +417,10 @@ st.markdown("""
     }
     .card-title {
         font-size: 18px;
-        color: #003087; /* Azul escuro da TQS */
+        color: #003087;
         margin-bottom: 15px;
         font-weight: bold;
     }
-    /* Ajuste nos inputs para um visual mais limpo */
     .stTextInput > div > div > input,
     .stNumberInput > div > div > input,
     .stSelectbox > div > div > select,
@@ -407,32 +429,30 @@ st.markdown("""
         border: 1px solid #d0d0d0;
         border-radius: 5px;
         padding: 8px;
-        color: #333; /* Texto escuro */
+        color: #333;
     }
     .stTextInput > div > div > input:focus,
     .stNumberInput > div > div > input:focus,
     .stSelectbox > div > div > select:focus {
-        border-color: #003087; /* Azul escuro da TQS */
+        border-color: #003087;
     }
     .stButton > button {
-        background-color: #d3d3d3; /* Cinza claro */
-        color: #000000; /* Texto preto */
+        background-color: #d3d3d3;
+        color: #000000;
         border-radius: 5px;
         padding: 10px 20px;
         border: none;
         font-size: 16px;
     }
     .stButton > button:hover {
-        background-color: #b0b0b0; /* Cinza um pouco mais escuro para hover */
+        background-color: #b0b0b0;
     }
-    /* Garantir que todo texto seja visível */
     div, p, label, span, input, select {
-        color: #333 !important; /* Texto escuro */
+        color: #333 !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Título principal
 st.markdown("<h1>Cálculo de Ações do Vento (NBR 6123:2023)</h1>", unsafe_allow_html=True)
 
 # Card 1: Informações do Projeto
@@ -443,6 +463,16 @@ project_info = {
     "location": st.text_input("Localização", "São Paulo, SP"),
     "calculator": st.text_input("Cálculo", "João Silva"),
 }
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Card: Seleção de Cidade e Estado para Velocidade do Vento
+st.markdown('<div class="card"><div class="card-title">Seleção de Localização para Velocidade do Vento</div>', unsafe_allow_html=True)
+states = sorted(list(set(city["estado"] for city in city_data)))
+state = st.selectbox("Selecione o Estado", [""] + states)
+cities = sorted([city["municipio"] for city in city_data if city["estado"] == state]) if state else []
+city = st.selectbox("Selecione a Cidade", [""] + cities)
+wind_speed = next((float(city["isopleta"].split()[0]) for city in city_data if city["municipio"] == city and city["estado"] == state), 42.0)
+st.write(f"Velocidade Básica do Vento (V0): {wind_speed} m/s")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Card 2: Dados da Edificação
@@ -458,7 +488,7 @@ with col2:
     z_fechamento = st.number_input("Altura Média - Fechamento (m)", min_value=0.0, value=13.0)
     z_cobertura = st.number_input("Altura Média - Cobertura (m)", min_value=0.0, value=13.8)
 portico_distance = st.number_input("Distância Entre Pórticos (m)", min_value=0.0, value=5.0)
-v0 = st.number_input("Velocidade Básica do Vento (V0) (m/s)", min_value=0.0, value=42.0)
+v0 = wind_speed
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Card 3: Parâmetros Meteorológicos
@@ -488,7 +518,6 @@ s3_options = {
 s3 = st.selectbox("Fator Estatístico (S3)", list(s3_options.keys()), format_func=lambda x: s3_options[x], index=0)
 s3_tp = {1.11: 100, 1.06: 75, 1.00: 50, 0.95: 37, 0.83: 15}[s3]
 
-# Calcular S2
 s2_fechamento, bm, p, fr = calculate_s2(z_fechamento, v0, category, class_)
 s2_cobertura, _, _, _ = calculate_s2(z_cobertura, v0, category, class_)
 st.write(f"Parâmetros S2: bm = {format_with_comma(bm)}, p = {format_with_comma(p)}, Fr = {format_with_comma(fr)}")
@@ -512,7 +541,7 @@ if cpi_case == "a":
 elif cpi_case == "b":
     st.write("- Cpi = -0,3 ou 0 (considerar o valor mais nocivo)")
     cpi = st.multiselect("Selecione os valores de Cpi:", [-0.3, 0.0], default=[-0.3, 0.0])
-else:  # cpi_case == "c"
+else:
     st.write("O valor de Cpi depende da proporção entre a área de aberturas na face de barlavento e a área total de aberturas:")
     st.write("- 1: Cpi = +0,1")
     st.write("- 1,5: Cpi = +0,3")
@@ -532,17 +561,14 @@ st.markdown('</div>', unsafe_allow_html=True)
 # Card 6: Resultados
 st.markdown('<div class="card"><div class="card-title">Resultados</div>', unsafe_allow_html=True)
 
-# Calcular Vk
 vk_fechamento = v0 * s1 * s2_fechamento * s3
 vk_cobertura = v0 * s1 * s2_cobertura * s3
 
-# Calcular Pressão Dinâmica (q)
 q_fechamento_nm2 = 0.613 * vk_fechamento**2
 q_cobertura_nm2 = 0.613 * vk_cobertura**2
 q_fechamento_kgfm2 = q_fechamento_nm2 / 9.81
 q_cobertura_kgfm2 = q_cobertura_nm2 / 9.81
 
-# Calcular Pressão Efetiva (DP)
 dp_results = {}
 for direction, ce_values in [
     ("Fechamento (0°/180°)", ce_fechamento_0),
@@ -574,7 +600,7 @@ for direction, dp_data in dp_results.items():
     st.dataframe(dp_df)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Nova Seção: Upload de Imagem (fora dos cards, antes do botão de gerar relatório)
+# Card: Upload de Imagem
 st.markdown('<div class="card"><div class="card-title">Upload de Imagem (Opcional)</div>', unsafe_allow_html=True)
 uploaded_image = st.file_uploader("Insira uma imagem para incluir no relatório:", type=["jpg", "jpeg", "png"])
 if uploaded_image is not None:
