@@ -15,7 +15,6 @@ def format_with_comma(value):
 
 # Função para calcular S2 (simplificada para o exemplo)
 def calculate_s2(z, v0, category, class_):
-    # Dados fictícios para bm, p, Fr (baseados na NBR 6123:2023)
     bm_dict = {"I": 1.0, "II": 0.9, "III": 0.8, "IV": 0.7, "V": 0.6}
     p_dict = {"I": 0.14, "II": 0.18, "III": 0.22, "IV": 0.28, "V": 0.35}
     fr_dict = {"A": 1.0, "B": 0.95, "C": 0.9}
@@ -24,64 +23,8 @@ def calculate_s2(z, v0, category, class_):
     p = p_dict[category]
     fr = fr_dict[class_]
     
-    # Cálculo de S2 (fórmula simplificada)
     s2 = bm * (z / 10) ** p * fr
     return s2, bm, p, fr
-
-# Função para criar figura das zonas de pressão (nova abordagem)
-def create_pressure_zones_image(length, width, h_zone, l_zone, i_zone, j_zone):
-    # Configurar a figura com proporções baseadas nas dimensões reais
-    fig_width = 8  # Largura fixa da figura em polegadas
-    aspect_ratio = width / length
-    fig_height = fig_width * aspect_ratio
-    fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=100)
-    
-    # Definir limites do gráfico com base nas dimensões reais
-    ax.set_xlim(0, length)
-    ax.set_ylim(0, width)
-    
-    # Desenhar retângulo principal (planta da edificação)
-    ax.add_patch(plt.Rectangle((0, 0), length, width, fill=False, edgecolor='black', linewidth=1.5))
-    
-    # Zonas H e L (de barlavento para sotavento)
-    ax.plot([h_zone, h_zone], [0, width], 'k--', linewidth=1, color='gray')
-    l_end = h_zone + l_zone
-    ax.plot([l_end, l_end], [0, width], 'k--', linewidth=1, color='gray')
-    
-    # Zonas I e J (laterais)
-    i_start = length - i_zone - j_zone
-    ax.plot([i_start, i_start], [0, width], 'k--', linewidth=1, color='gray')
-    j_start = length - j_zone
-    ax.plot([j_start, j_start], [0, width], 'k--', linewidth=1, color='gray')
-    
-    # Rótulos das zonas com fundo branco e borda
-    ax.text(h_zone/2, width/2, 'H', fontsize=12, ha='center', va='center', color='darkblue',
-            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
-    ax.text((h_zone + l_end)/2, width/2, 'L', fontsize=12, ha='center', va='center', color='darkblue',
-            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
-    ax.text((i_start + j_start)/2, width/2, 'I', fontsize=12, ha='center', va='center', color='darkblue',
-            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
-    ax.text((j_start + length)/2, width/2, 'J', fontsize=12, ha='center', va='center', color='darkblue',
-            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
-    
-    # Adicionar rótulos de dimensões
-    ax.text(length/2, -width*0.1, f'Comprimento (a) = {length:.1f}m', ha='center', va='top', fontsize=10)
-    ax.text(-length*0.05, width/2, f'Largura (b) = {width:.1f}m', ha='right', va='center', fontsize=10, rotation=90)
-    
-    # Adicionar setas indicando a direção do vento
-    ax.arrow(length + 1, width/2, 2, 0, head_width=0.5, head_length=0.5, fc='black', ec='black')
-    ax.text(length + 3, width/2, 'Vento', ha='left', va='center', fontsize=10)
-    
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_xlabel('Planta da Edificação - Zonas de Pressão Externa', fontsize=10, labelpad=10)
-    
-    plt.tight_layout()
-    buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
-    plt.close()
-    buf.seek(0)
-    return buf
 
 # Função para criar gráfico de velocidade do vento em função da altura
 def create_velocity_height_graph(z_values, vk_values):
@@ -100,7 +43,7 @@ def create_velocity_height_graph(z_values, vk_values):
     buf.seek(0)
     return buf
 
-# Função para gerar o PDF
+# Função para gerar o PDF (versão anterior com mais informações)
 def generate_pdf(data, results, project_info):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
@@ -167,8 +110,48 @@ def generate_pdf(data, results, project_info):
     story.append(building_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 4: Tabela 4 - Valores Mínimos do Fator Estatístico S3
-    story.append(Paragraph("3. Valores Mínimos do Fator Estatístico S3", heading_style))
+    # Seção 4: Parâmetros Meteorológicos
+    story.append(Paragraph("3. Parâmetros Meteorológicos", heading_style))
+    meteo_data = [
+        ["Velocidade Básica do Vento (V0)", f"{data['v0']:.1f} m/s"],
+        ["Categoria de Rugosidade", f"{data['category']} - {data['category_description']}"],
+        ["Classe", data['class_']]
+    ]
+    meteo_table = Table(meteo_data, colWidths=[5*cm, 10*cm])
+    meteo_table.setStyle(TableStyle([
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+    ]))
+    story.append(meteo_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # Seção 5: Fatores S1, S2, S3
+    story.append(Paragraph("4. Fatores S1, S2, S3", heading_style))
+    factors_data = [
+        ["Fator Topográfico (S1)", f"{data['s1']}"],
+        ["Fator S2 - Fechamento", format_with_comma(results['s2_fechamento'])],
+        ["Fator S2 - Cobertura", format_with_comma(results['s2_cobertura'])],
+        ["Fator Estatístico (S3)", f"{data['s3']} (Tp: {data['s3_tp']} anos)"],
+        ["Parâmetro bm", format_with_comma(results['bm'])],
+        ["Parâmetro p", format_with_comma(results['p'])],
+        ["Parâmetro Fr", format_with_comma(results['fr'])]
+    ]
+    factors_table = Table(factors_data, colWidths=[5*cm, 5*cm])
+    factors_table.setStyle(TableStyle([
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+    ]))
+    story.append(factors_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # Seção 6: Tabela 4 - Valores Mínimos do Fator Estatístico S3
+    story.append(Paragraph("5. Valores Mínimos do Fator Estatístico S3", heading_style))
     s3_table_data = [
         ["Grupo", "Descrição", "S3", "Tp (anos)"],
         ["1", Paragraph("Estruturas cuja ruína total ou parcial pode afetar a segurança ou possibilidade de socorro a pessoas após uma tempestade destrutiva (hospitais, quartéis de bombeiros e de forças de segurança, edifícios de centros de controle, torres de comunicação etc.). Obras de infraestrutura rodoviária e ferroviária. Estruturas que abrigam substâncias inflamáveis, tóxicas e/ou explosivas. Vedações das edificações do grupo 1 (telhas, vidros, painéis de vedação).", description_style), "1,11", "100"],
@@ -200,46 +183,6 @@ def generate_pdf(data, results, project_info):
     story.append(s3_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 5: Parâmetros Meteorológicos
-    story.append(Paragraph("4. Parâmetros Meteorológicos", heading_style))
-    meteo_data = [
-        ["Velocidade Básica do Vento (V0)", f"{data['v0']:.1f} m/s"],
-        ["Categoria de Rugosidade", f"{data['category']} - {data['category_description']}"],
-        ["Classe", data['class_']]
-    ]
-    meteo_table = Table(meteo_data, colWidths=[5*cm, 10*cm])
-    meteo_table.setStyle(TableStyle([
-        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
-        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
-    ]))
-    story.append(meteo_table)
-    story.append(Spacer(1, 0.5*cm))
-
-    # Seção 6: Fatores S1, S2, S3
-    story.append(Paragraph("5. Fatores S1, S2, S3", heading_style))
-    factors_data = [
-        ["Fator Topográfico (S1)", f"{data['s1']}"],
-        ["Fator S2 - Fechamento", format_with_comma(results['s2_fechamento'])],
-        ["Fator S2 - Cobertura", format_with_comma(results['s2_cobertura'])],
-        ["Fator Estatístico (S3)", f"{data['s3']} (Tp: {data['s3_tp']} anos)"],
-        ["Parâmetro bm", format_with_comma(results['bm'])],
-        ["Parâmetro p", format_with_comma(results['p'])],
-        ["Parâmetro Fr", format_with_comma(results['fr'])]
-    ]
-    factors_table = Table(factors_data, colWidths=[5*cm, 5*cm])
-    factors_table.setStyle(TableStyle([
-        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
-        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
-    ]))
-    story.append(factors_table)
-    story.append(Spacer(1, 0.5*cm))
-
     # Seção 7: Velocidade Característica (Vk)
     story.append(Paragraph("6. Velocidade Característica (Vk)", heading_style))
     vk_data = [
@@ -259,6 +202,7 @@ def generate_pdf(data, results, project_info):
 
     # Seção 8: Pressão Dinâmica (q)
     story.append(Paragraph("7. Pressão Dinâmica (q)", heading_style))
+    story.append(Paragraph("A pressão dinâmica é calculada pela fórmula: q = 0,613 * Vk²", body_style))
     q_data = [
         ["Fechamento", f"{format_with_comma(results['q_fechamento_nm2'])} N/m² ({format_with_comma(results['q_fechamento_kgfm2'])} kgf/m²)"],
         ["Cobertura", f"{format_with_comma(results['q_cobertura_nm2'])} N/m² ({format_with_comma(results['q_cobertura_kgfm2'])} kgf/m²)"]
@@ -289,26 +233,100 @@ def generate_pdf(data, results, project_info):
     story.append(cpi_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 10: Coeficientes de Pressão Externa (Ce)
+    # Seção 10: Coeficientes de Pressão Externa (Ce) - Tabelas Detalhadas
     story.append(Paragraph("9. Coeficientes de Pressão Externa (Ce)", heading_style))
-    ce_data = []
-    ce_data.append(["Fechamento (0°/180°)"] + [format_with_comma(ce) for ce in results['ce_fechamento_0']])
-    ce_data.append(["Fechamento (90°/270°)"] + [format_with_comma(ce) for ce in results['ce_fechamento_90']])
-    ce_data.append(["Cobertura (0°/180°)"] + [format_with_comma(ce) for ce in results['ce_cobertura_0']])
-    ce_data.append(["Cobertura (90°/270°)"] + [format_with_comma(ce) for ce in results['ce_cobertura_90']])
-    ce_table = Table(ce_data, colWidths=[5*cm] + [2*cm] * len(max([results['ce_fechamento_0'], results['ce_fechamento_90'], results['ce_cobertura_0'], results['ce_cobertura_90']], key=len)))
-    ce_table.setStyle(TableStyle([
+    
+    # Tabela: Paredes - Vento a 0° e 180°
+    story.append(Paragraph("Tabela 2 – Coeficientes de Pressão Externa – Paredes (Vento a 0° e 180°)", table_title_style))
+    ce_walls_0_180_data = [
+        ["Face", "Zona", "Ce"],
+        ["Barlavento", "Geral", "0,7"],
+        ["Sotavento", "Geral", "-0,425"],
+        ["Laterais", "Geral", "-0,9"],
+        ["", "Zona H (0 a h)", "-0,4625"],
+        ["", "Zona I (0 a h)", "-0,2820"]
+    ]
+    ce_walls_0_180_table = Table(ce_walls_0_180_data, colWidths=[5*cm, 5*cm, 5*cm])
+    ce_walls_0_180_table.setStyle(TableStyle([
+        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
         ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
     ]))
-    story.append(ce_table)
+    story.append(ce_walls_0_180_table)
+    story.append(Spacer(1, 0.3*cm))
+
+    # Tabela: Paredes - Vento a 90° e 270°
+    story.append(Paragraph("Tabela 3 – Coeficientes de Pressão Externa – Paredes (Vento a 90° e 270°)", table_title_style))
+    ce_walls_90_270_data = [
+        ["Face", "Zona", "Ce"],
+        ["Barlavento", "Geral", "0,7"],
+        ["Sotavento", "Geral", "-0,5"],
+        ["Laterais", "Geral", "-0,9"],
+        ["", "Zona H (0 a h)", "-0,5375"]
+    ]
+    ce_walls_90_270_table = Table(ce_walls_90_270_data, colWidths=[5*cm, 5*cm, 5*cm])
+    ce_walls_90_270_table.setStyle(TableStyle([
+        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+    ]))
+    story.append(ce_walls_90_270_table)
+    story.append(Spacer(1, 0.3*cm))
+
+    # Tabela: Cobertura - Vento a 0° e 180°
+    story.append(Paragraph("Tabela 4 – Coeficientes de Pressão Externa – Cobertura (Vento a 0° e 180°)", table_title_style))
+    ce_roof_0_180_data = [
+        ["Zona", "Ce (Inclinação 10%)"],
+        ["H (Alta Sucção)", "-0,9"],
+        ["I (Média Sucção)", "-0,6"],
+        ["J (Baixa Sucção)", "-0,325"],
+        ["Barlavento", "0,7"]
+    ]
+    ce_roof_0_180_table = Table(ce_roof_0_180_data, colWidths=[5*cm, 5*cm])
+    ce_roof_0_180_table.setStyle(TableStyle([
+        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+    ]))
+    story.append(ce_roof_0_180_table)
+    story.append(Spacer(1, 0.3*cm))
+
+    # Tabela: Cobertura - Vento a 90° e 270°
+    story.append(Paragraph("Tabela 5 – Coeficientes de Pressão Externa – Cobertura (Vento a 90° e 270°)", table_title_style))
+    ce_roof_90_270_data = [
+        ["Zona", "Ce (Inclinação 10%)"],
+        ["H (Alta Sucção)", "-0,9284"],
+        ["I (Média Sucção)", "-0,6"],
+        ["J (Baixa Sucção)", "-0,5375"]
+    ]
+    ce_roof_90_270_table = Table(ce_roof_90_270_data, colWidths=[5*cm, 5*cm])
+    ce_roof_90_270_table.setStyle(TableStyle([
+        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+    ]))
+    story.append(ce_roof_90_270_table)
     story.append(Spacer(1, 0.5*cm))
 
     # Seção 11: Pressão Efetiva (DP)
     story.append(Paragraph("10. Pressão Efetiva (DP)", heading_style))
+    story.append(Paragraph("A pressão efetiva é calculada pela fórmula: DP = q * (Ce - Cpi)", body_style))
     for direction, dp_data in results['dp_results'].items():
         story.append(Paragraph(direction, subheading_style))
         dp_table_data = [["Ce", "Cpi", "DP (kgf/m²)"]] + dp_data
@@ -326,20 +344,37 @@ def generate_pdf(data, results, project_info):
         story.append(Spacer(1, 0.3*cm))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 12: Perfil de Velocidade do Vento
-    story.append(Paragraph("11. Perfil de Velocidade do Vento em Função da Altura", heading_style))
+    # Seção 12: Exemplo de Cálculo
+    story.append(Paragraph("11. Exemplo de Cálculo", heading_style))
+    story.append(Paragraph("Exemplo para Fechamento (0°/180°), Ce = 0,7, Cpi = 0,2:", body_style))
+    q = results['q_fechamento_kgfm2']
+    ce = 0.7
+    cpi_val = 0.2
+    dp = q * (ce - cpi_val)
+    example_data = [
+        ["Parâmetro", "Valor"],
+        ["q (Fechamento)", f"{format_with_comma(q)} kgf/m²"],
+        ["Ce", "0,7"],
+        ["Cpi", "0,2"],
+        ["DP = q * (Ce - Cpi)", f"{format_with_comma(dp)} kgf/m²"]
+    ]
+    example_table = Table(example_data, colWidths=[5*cm, 5*cm])
+    example_table.setStyle(TableStyle([
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+    ]))
+    story.append(example_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # Seção 13: Perfil de Velocidade do Vento
+    story.append(Paragraph("12. Perfil de Velocidade do Vento em Função da Altura", heading_style))
     z_values = np.linspace(0, max(data['z_fechamento'], data['z_cobertura']) * 1.5, 100)
     vk_values = [data['v0'] * data['s1'] * calculate_s2(z, data['v0'], data['category'], data['class_'])[0] * data['s3'] for z in z_values]
     velocity_img = create_velocity_height_graph(z_values, vk_values)
     story.append(Image(velocity_img, width=12*cm, height=8*cm))
-    story.append(Spacer(1, 0.5*cm))
-
-    # Seção 13: Zonas de Pressão Externa
-    story.append(Paragraph("12. Zonas de Pressão Externa", heading_style))
-    story.append(Paragraph("Figura 1 – Zonas de Pressão Externa (H, L, I, J) – NBR 6123:2023", table_title_style))
-    pressure_zones_img = create_pressure_zones_image(data['length'], data['width'], data['h_zone'], data['l_zone'], data['i_zone'], data['j_zone'])
-    story.append(Image(pressure_zones_img, width=15*cm, height=5*cm))
-    story.append(Paragraph(f"H: Alta sucção ({data['h_zone']:.1f}m a partir da borda de barlavento); L: Baixa sucção (de {data['h_zone']:.1f}m até {data['h_zone'] + data['l_zone']:.1f}m); I, J: Zonas laterais ({data['i_zone']:.1f}m e {data['j_zone']:.1f}m).", body_style))
     story.append(Spacer(1, 0.5*cm))
 
     # Finalizar o PDF
@@ -348,29 +383,29 @@ def generate_pdf(data, results, project_info):
     return buffer
 
 # Interface do Streamlit
-# Adicionar CSS personalizado para estilizar a interface
+# Adicionar CSS personalizado (inspirado no site da TQS)
 st.markdown("""
     <style>
     /* Estilo geral para uma aparência minimalista */
     .stApp {
-        background-color: #f5f5f5;
+        background-color: #ffffff;
         font-family: 'Arial', sans-serif;
     }
     h1 {
-        color: #333;
+        color: #003087; /* Azul escuro da TQS */
         text-align: center;
         font-size: 28px;
         margin-bottom: 20px;
     }
     h2 {
-        color: #555;
+        color: #333;
         font-size: 20px;
         margin-bottom: 15px;
     }
     /* Estilo dos cards */
     .card {
-        background-color: white;
-        border-radius: 10px;
+        background-color: #ffffff;
+        border-radius: 8px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         padding: 20px;
         margin-bottom: 20px;
@@ -378,7 +413,7 @@ st.markdown("""
     }
     .card-title {
         font-size: 18px;
-        color: #333;
+        color: #003087; /* Azul escuro da TQS */
         margin-bottom: 15px;
         font-weight: bold;
     }
@@ -391,9 +426,15 @@ st.markdown("""
         border: 1px solid #d0d0d0;
         border-radius: 5px;
         padding: 8px;
+        color: #333; /* Texto escuro */
+    }
+    .stTextInput > div > div > input:focus,
+    .stNumberInput > div > div > input:focus,
+    .stSelectbox > div > div > select:focus {
+        border-color: #003087; /* Azul escuro da TQS */
     }
     .stButton > button {
-        background-color: #007bff;
+        background-color: #003087; /* Azul escuro da TQS */
         color: white;
         border-radius: 5px;
         padding: 10px 20px;
@@ -401,7 +442,11 @@ st.markdown("""
         font-size: 16px;
     }
     .stButton > button:hover {
-        background-color: #0056b3;
+        background-color: #002060; /* Tom mais escuro para hover */
+    }
+    /* Garantir que todo texto seja visível */
+    div, p, label, span, input, select {
+        color: #333 !important; /* Texto escuro */
     }
     </style>
 """, unsafe_allow_html=True)
@@ -495,27 +540,12 @@ else:  # cpi_case == "c"
     st.write("- 6 ou mais: Cpi = +0,8")
     cpi = st.multiselect("Selecione os valores de Cpi:", [0.1, 0.3, 0.5, 0.6, 0.8], default=[0.1, 0.3])
 
-st.subheader("Zonas de Pressão Externa")
-st.write("Defina as dimensões das zonas de pressão (H, L, I, J) com base nas dimensões da edificação.")
-col1, col2 = st.columns(2)
-with col1:
-    h_zone = st.number_input("Zona H (m) - Alta sucção", min_value=0.0, value=width/2, help="Sugerido: b/2")
-    l_zone = st.number_input("Zona L (m) - Baixa sucção", min_value=0.0, value=(length/2 - width/2), help="Sugerido: a/2 - b/2")
-with col2:
-    i_zone = st.number_input("Zona I (m) - Lateral", min_value=0.0, value=width/4, help="Sugerido: b/4")
-    j_zone = st.number_input("Zona J (m) - Lateral", min_value=0.0, value=width/4, help="Sugerido: b/4")
-
-st.subheader("Pressões Externas nas Paredes")
+st.subheader("Pressões Externas nas Paredes e Cobertura")
 st.write("Defina os coeficientes de pressão externa (Ce) para cada direção.")
 ce_fechamento_0 = st.multiselect("Ce - Fechamento (0°/180°)", [-0.9, -0.4625, -0.2820, -0.425, 0.7], default=[-0.9, -0.4625, -0.2820, -0.425, 0.7])
 ce_fechamento_90 = st.multiselect("Ce - Fechamento (90°/270°)", [-0.9, -0.5, -0.5375], default=[-0.9, -0.5, -0.5375])
 ce_cobertura_0 = st.multiselect("Ce - Cobertura (0°/180°)", [-0.9, -0.6, -0.325, 0.7], default=[-0.9, -0.6, -0.325, 0.7])
 ce_cobertura_90 = st.multiselect("Ce - Cobertura (90°/270°)", [-0.9284, -0.6, -0.5375], default=[-0.9284, -0.6, -0.5375])
-
-# Visualizar a planta baixa interativamente
-st.subheader("Pré-visualização da Planta Baixa")
-pressure_zones_img = create_pressure_zones_image(length, width, h_zone, l_zone, i_zone, j_zone)
-st.image(pressure_zones_img, caption="Zonas de Pressão Externa (H, L, I, J)")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Card 6: Resultados
@@ -561,13 +591,6 @@ for direction, dp_data in dp_results.items():
     st.write(f"{direction}")
     dp_df = pd.DataFrame(dp_data, columns=["Ce", "Cpi", "DP (kgf/m²)"])
     st.dataframe(dp_df)
-
-# Gráfico de Velocidade do Vento
-st.subheader("Perfil de Velocidade do Vento em Função da Altura")
-z_values = np.linspace(0, max(z_fechamento, z_cobertura) * 1.5, 100)
-vk_values = [v0 * s1 * calculate_s2(z, v0, category, class_)[0] * s3 for z in z_values]
-velocity_img = create_velocity_height_graph(z_values, vk_values)
-st.image(velocity_img, caption="Velocidade do Vento (Vk) vs. Altura (z)")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Dados para o PDF
@@ -587,10 +610,6 @@ data = {
     "s1": s1,
     "s3": s3,
     "s3_tp": s3_tp,
-    "h_zone": h_zone,
-    "l_zone": l_zone,
-    "i_zone": i_zone,
-    "j_zone": j_zone
 }
 results = {
     "s2_fechamento": s2_fechamento,
