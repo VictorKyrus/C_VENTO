@@ -9,6 +9,9 @@ from reportlab.lib import colors
 from reportlab.lib.units import cm
 import matplotlib.pyplot as plt
 from PIL import Image as PILImage
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from datetime import datetime
 
 # Funções auxiliares
 def format_with_comma(value):
@@ -44,17 +47,69 @@ def create_velocity_height_graph(z_values, vk_values):
     buf.seek(0)
     return buf
 
-# Função para gerar o PDF (atualizada com fórmulas, gráfico e upload de imagem)
+# Função para adicionar cabeçalho e rodapé
+def add_header_footer(canvas, doc):
+    canvas.saveState()
+    
+    # Cabeçalho
+    canvas.setFont("Helvetica-Bold", 12)
+    canvas.setFillColor(colors.darkblue)
+    canvas.drawString(2*cm, A4[1] - 1.5*cm, "Memorial de Cálculo - Ações do Vento (NBR 6123:2023)")
+    canvas.line(2*cm, A4[1] - 1.8*cm, A4[0] - 2*cm, A4[1] - 1.8*cm)
+    
+    # Rodapé
+    canvas.setFont("Helvetica", 8)
+    canvas.setFillColor(colors.grey)
+    page_num = canvas.getPageNumber()
+    footer_text = f"Página {page_num} | Data: {datetime.now().strftime('%d/%m/%Y')}"
+    canvas.drawString(2*cm, 1*cm, footer_text)
+    canvas.line(2*cm, 1.3*cm, A4[0] - 2*cm, 1.3*cm)
+    
+    canvas.restoreState()
+
+# Função para gerar o PDF (versão simplificada com aparência melhorada)
 def generate_pdf(data, results, project_info, uploaded_image=None):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=2*cm,
+        leftMargin=2*cm,
+        topMargin=3*cm,  # Aumentado para acomodar o cabeçalho
+        bottomMargin=2*cm  # Aumentado para acomodar o rodapé
+    )
     story = []
 
-    # Estilos
-    heading_style = ParagraphStyle(name='Heading', fontName='Helvetica-Bold', fontSize=14, spaceAfter=12)
-    subheading_style = ParagraphStyle(name='Subheading', fontName='Helvetica', fontSize=12, spaceAfter=10)
-    body_style = ParagraphStyle(name='Body', fontName='Helvetica', fontSize=10, spaceAfter=8)
-    table_title_style = ParagraphStyle(name='TableTitle', fontName='Helvetica-Oblique', fontSize=10, spaceAfter=6)
+    # Estilos atualizados para aparência mais profissional
+    heading_style = ParagraphStyle(
+        name='Heading',
+        fontName='Helvetica-Bold',
+        fontSize=16,
+        textColor=colors.darkblue,
+        spaceAfter=12,
+        leading=18
+    )
+    subheading_style = ParagraphStyle(
+        name='Subheading',
+        fontName='Helvetica-Bold',
+        fontSize=12,
+        textColor=colors.darkslategray,
+        spaceAfter=10
+    )
+    body_style = ParagraphStyle(
+        name='Body',
+        fontName='Helvetica',
+        fontSize=10,
+        textColor=colors.black,
+        spaceAfter=8
+    )
+    table_title_style = ParagraphStyle(
+        name='TableTitle',
+        fontName='Helvetica-Oblique',
+        fontSize=10,
+        textColor=colors.darkblue,
+        spaceAfter=6
+    )
     description_style = ParagraphStyle(
         name='DescriptionStyle',
         fontName='Helvetica',
@@ -62,14 +117,11 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
         leading=9,
         alignment=0,
         spaceAfter=0,
-        leftIndent=0
+        leftIndent=0,
+        textColor=colors.black
     )
 
-    # Seção 1: Título
-    story.append(Paragraph("Memorial de Cálculo - Ações do Vento (NBR 6123:2023)", heading_style))
-    story.append(Spacer(1, 0.5*cm))
-
-    # Seção 2: Informações do Projeto
+    # Seção 1: Informações do Projeto
     story.append(Paragraph("1. Informações do Projeto", heading_style))
     project_data = [
         ["Cliente", project_info["client"]],
@@ -81,14 +133,17 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     project_table.setStyle(TableStyle([
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
         ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
+        ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.white, colors.whitesmoke]),
     ]))
     story.append(project_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 3: Dados da Edificação
+    # Seção 2: Dados da Edificação
     story.append(Paragraph("2. Dados da Edificação", heading_style))
     building_data = [
         ["Comprimento (a)", f"{data['length']:.1f} m"],
@@ -104,14 +159,17 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     building_table.setStyle(TableStyle([
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
         ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
+        ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.white, colors.whitesmoke]),
     ]))
     story.append(building_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 4: Parâmetros Meteorológicos
+    # Seção 3: Parâmetros Meteorológicos
     story.append(Paragraph("3. Parâmetros Meteorológicos", heading_style))
     meteo_data = [
         ["Velocidade Básica do Vento (V0)", f"{data['v0']:.1f} m/s"],
@@ -122,14 +180,17 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     meteo_table.setStyle(TableStyle([
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
         ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
+        ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.white, colors.whitesmoke]),
     ]))
     story.append(meteo_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 5: Fatores S1, S2, S3
+    # Seção 4: Fatores S1, S2, S3
     story.append(Paragraph("4. Fatores S1, S2, S3", heading_style))
     factors_data = [
         ["Fator Topográfico (S1)", f"{data['s1']}"],
@@ -144,48 +205,18 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     factors_table.setStyle(TableStyle([
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
         ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
+        ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.white, colors.whitesmoke]),
     ]))
     story.append(factors_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 6: Tabela 4 - Valores Mínimos do Fator Estatístico S3
-    story.append(Paragraph("5. Valores Mínimos do Fator Estatístico S3", heading_style))
-    s3_table_data = [
-        ["Grupo", "Descrição", "S3", "Tp (anos)"],
-        ["1", Paragraph("Estruturas cuja ruína total ou parcial pode afetar a segurança ou possibilidade de socorro a pessoas após uma tempestade destrutiva (hospitais, quartéis de bombeiros e de forças de segurança, edifícios de centros de controle, torres de comunicação etc.). Obras de infraestrutura rodoviária e ferroviária. Estruturas que abrigam substâncias inflamáveis, tóxicas e/ou explosivas. Vedações das edificações do grupo 1 (telhas, vidros, painéis de vedação).", description_style), "1,11", "100"],
-        ["2", Paragraph("Estruturas cuja ruína representa substancial risco à vida humana, particularmente pessoas em aglomerações, crianças e jovens, incluindo, mas não limitadamente a: - edificações com capacidade de aglomeração de mais de 300 pessoas em um mesmo ambiente, como centros de convenções, ginásios, estádios etc.; - creches com capacidade maior do que 150 pessoas; - escolas com capacidade maior do que 250 pessoas. Vedações das edificações do grupo 2 (telhas, vidros, painéis de vedação).", description_style), "1,06", "75"],
-        ["3", Paragraph("Edificações para residências, hotéis, comércio, indústrias. Estruturas ou elementos estruturais desmontáveis com vistas a reutilização. Vedações das edificações do grupo 3 (telhas, vidros, painéis de vedação).", description_style), "1,00", "50"],
-        ["4", Paragraph("Edificações não destinadas à ocupação humana (depósitos, silos) e sem circulação de pessoas no entorno. Vedações das edificações do grupo 4 (telhas, vidros, painéis de vedação).", description_style), "0,95", "37"],
-        ["5", Paragraph("Edificações temporárias não reutilizáveis. Estruturas dos Grupos 1 a 4 durante a construção (fator aplicável em um prazo máximo de 2 anos). Vedações das edificações do grupo 5 (telhas, vidros, painéis de vedação).", description_style), "0,83", "15"],
-    ]
-    story.append(Paragraph("Tabela 1 – Valores Mínimos do Fator S3 – NBR 6123:2023", table_title_style))
-    s3_table = Table(s3_table_data, colWidths=[1.8*cm, 12*cm, 1.6*cm, 1.6*cm])
-    s3_table.setStyle(TableStyle([
-        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 8),
-        ('ALIGN', (0,0), (0,-1), 'CENTER'),
-        ('ALIGN', (1,0), (1,-1), 'LEFT'),
-        ('ALIGN', (2,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (0,-1), 'MIDDLE'),
-        ('VALIGN', (1,0), (1,-1), 'TOP'),
-        ('VALIGN', (2,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
-        ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
-        ('BOX', (0,0), (-1,-1), 0.5, colors.black),
-        ('LEFTPADDING', (0,0), (-1,-1), 10),
-        ('RIGHTPADDING', (0,0), (-1,-1), 10),
-        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
-    ]))
-    story.append(s3_table)
-    story.append(Spacer(1, 0.5*cm))
-
-    # Seção 7: Velocidade Característica (Vk)
-    story.append(Paragraph("6. Velocidade Característica (Vk)", heading_style))
+    # Seção 5: Velocidade Característica (Vk)
+    story.append(Paragraph("5. Velocidade Característica (Vk)", heading_style))
     vk_data = [
         ["Fechamento", f"{format_with_comma(results['vk_fechamento'])} m/s"],
         ["Cobertura", f"{format_with_comma(results['vk_cobertura'])} m/s"]
@@ -194,15 +225,18 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     vk_table.setStyle(TableStyle([
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
         ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
+        ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.white, colors.whitesmoke]),
     ]))
     story.append(vk_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 8: Pressão Dinâmica (q)
-    story.append(Paragraph("7. Pressão Dinâmica (q)", heading_style))
+    # Seção 6: Pressão Dinâmica (q)
+    story.append(Paragraph("6. Pressão Dinâmica (q)", heading_style))
     story.append(Paragraph("A pressão dinâmica é calculada pela fórmula: q = 0,613 * Vk²", body_style))
     q_data = [
         ["Fechamento", f"{format_with_comma(results['q_fechamento_nm2'])} N/m² ({format_with_comma(results['q_fechamento_kgfm2'])} kgf/m²)"],
@@ -212,183 +246,73 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     q_table.setStyle(TableStyle([
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
         ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
+        ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.white, colors.whitesmoke]),
     ]))
     story.append(q_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 9: Coeficientes de Pressão Interna (Cpi)
-    story.append(Paragraph("8. Coeficientes de Pressão Interna (Cpi)", heading_style))
+    # Seção 7: Coeficientes de Pressão Interna (Cpi)
+    story.append(Paragraph("7. Coeficientes de Pressão Interna (Cpi)", heading_style))
     story.append(Paragraph(f"Caso Selecionado: {results['cpi_case_description']}", subheading_style))
     cpi_data = [[f"Cpi: {format_with_comma(val)}"] for val in results['cpi']]
     cpi_table = Table(cpi_data, colWidths=[5*cm])
     cpi_table.setStyle(TableStyle([
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
         ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
     ]))
     story.append(cpi_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 10: Coeficientes de Pressão Externa (Ce) - Tabelas Detalhadas
-    story.append(Paragraph("9. Coeficientes de Pressão Externa (Ce)", heading_style))
-    
-    # Tabela: Paredes - Vento a 0° e 180°
-    story.append(Paragraph("Tabela 2 – Coeficientes de Pressão Externa – Paredes (Vento a 0° e 180°)", table_title_style))
-    ce_walls_0_180_data = [
-        ["Face", "Zona", "Ce"],
-        ["Barlavento", "Geral", "0,7"],
-        ["Sotavento", "Geral", "-0,425"],
-        ["Laterais", "Geral", "-0,9"],
-        ["", "Zona H (0 a h)", "-0,4625"],
-        ["", "Zona I (0 a h)", "-0,2820"]
-    ]
-    ce_walls_0_180_table = Table(ce_walls_0_180_data, colWidths=[5*cm, 5*cm, 5*cm])
-    ce_walls_0_180_table.setStyle(TableStyle([
-        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
-        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
-    ]))
-    story.append(ce_walls_0_180_table)
-    story.append(Spacer(1, 0.3*cm))
-
-    # Tabela: Paredes - Vento a 90° e 270°
-    story.append(Paragraph("Tabela 3 – Coeficientes de Pressão Externa – Paredes (Vento a 90° e 270°)", table_title_style))
-    ce_walls_90_270_data = [
-        ["Face", "Zona", "Ce"],
-        ["Barlavento", "Geral", "0,7"],
-        ["Sotavento", "Geral", "-0,5"],
-        ["Laterais", "Geral", "-0,9"],
-        ["", "Zona H (0 a h)", "-0,5375"]
-    ]
-    ce_walls_90_270_table = Table(ce_walls_90_270_data, colWidths=[5*cm, 5*cm, 5*cm])
-    ce_walls_90_270_table.setStyle(TableStyle([
-        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
-        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
-    ]))
-    story.append(ce_walls_90_270_table)
-    story.append(Spacer(1, 0.3*cm))
-
-    # Tabela: Cobertura - Vento a 0° e 180°
-    story.append(Paragraph("Tabela 4 – Coeficientes de Pressão Externa – Cobertura (Vento a 0° e 180°)", table_title_style))
-    ce_roof_0_180_data = [
-        ["Zona", "Ce (Inclinação 10%)"],
-        ["H (Alta Sucção)", "-0,9"],
-        ["I (Média Sucção)", "-0,6"],
-        ["J (Baixa Sucção)", "-0,325"],
-        ["Barlavento", "0,7"]
-    ]
-    ce_roof_0_180_table = Table(ce_roof_0_180_data, colWidths=[5*cm, 5*cm])
-    ce_roof_0_180_table.setStyle(TableStyle([
-        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
-        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
-    ]))
-    story.append(ce_roof_0_180_table)
-    story.append(Spacer(1, 0.3*cm))
-
-    # Tabela: Cobertura - Vento a 90° e 270°
-    story.append(Paragraph("Tabela 5 – Coeficientes de Pressão Externa – Cobertura (Vento a 90° e 270°)", table_title_style))
-    ce_roof_90_270_data = [
-        ["Zona", "Ce (Inclinação 10%)"],
-        ["H (Alta Sucção)", "-0,9284"],
-        ["I (Média Sucção)", "-0,6"],
-        ["J (Baixa Sucção)", "-0,5375"]
-    ]
-    ce_roof_90_270_table = Table(ce_roof_90_270_data, colWidths=[5*cm, 5*cm])
-    ce_roof_90_270_table.setStyle(TableStyle([
-        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
-        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
-    ]))
-    story.append(ce_roof_90_270_table)
-    story.append(Spacer(1, 0.5*cm))
-
-    # Seção 11: Pressão Efetiva (DP)
-    story.append(Paragraph("10. Pressão Efetiva (DP)", heading_style))
+    # Seção 8: Pressão Efetiva (DP)
+    story.append(Paragraph("8. Pressão Efetiva (DP)", heading_style))
     story.append(Paragraph("A pressão efetiva é calculada pela fórmula: DP = q * (Ce - Cpi)", body_style))
     for direction, dp_data in results['dp_results'].items():
         story.append(Paragraph(direction, subheading_style))
         dp_table_data = [["Ce", "Cpi", "DP (kgf/m²)"]] + dp_data
         dp_table = Table(dp_table_data, colWidths=[3*cm, 3*cm, 3*cm])
         dp_table.setStyle(TableStyle([
-            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
             ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
             ('FONTSIZE', (0,0), (-1,-1), 8),
             ('ALIGN', (0,0), (-1,-1), 'CENTER'),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+            ('BACKGROUND', (0,0), (-1,0), colors.lightblue),
             ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
         ]))
         story.append(dp_table)
         story.append(Spacer(1, 0.3*cm))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 12: Exemplo de Cálculo
-    story.append(Paragraph("11. Exemplo de Cálculo", heading_style))
-    story.append(Paragraph("Exemplo para Fechamento (0°/180°), Ce = 0,7, Cpi = 0,2:", body_style))
-    q = results['q_fechamento_kgfm2']
-    ce = 0.7
-    cpi_val = 0.2
-    dp = q * (ce - cpi_val)
-    example_data = [
-        ["Parâmetro", "Valor"],
-        ["q (Fechamento)", f"{format_with_comma(q)} kgf/m²"],
-        ["Ce", "0,7"],
-        ["Cpi", "0,2"],
-        ["DP = q * (Ce - Cpi)", f"{format_with_comma(dp)} kgf/m²"]
-    ]
-    example_table = Table(example_data, colWidths=[5*cm, 5*cm])
-    example_table.setStyle(TableStyle([
-        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
-        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
-    ]))
-    story.append(example_table)
-    story.append(Spacer(1, 0.5*cm))
-
-    # Seção 13: Perfil de Velocidade do Vento
-    story.append(Paragraph("12. Perfil de Velocidade do Vento em Função da Altura", heading_style))
-    z_values = np.linspace(0, max(data['z_fechamento'], data['z_cobertura']) * 1.5, 100)
-    vk_values = [data['v0'] * data['s1'] * calculate_s2(z, data['v0'], data['category'], data['class_'])[0] * data['s3'] for z in z_values]
-    velocity_img = create_velocity_height_graph(z_values, vk_values)
-    story.append(Image(velocity_img, width=12*cm, height=8*cm))
-    story.append(Spacer(1, 0.5*cm))
-
-    # Nova Seção: Metodologia de Cálculo (Fórmulas)
-    story.append(Paragraph("13. Metodologia de Cálculo", heading_style))
+    # Seção 9: Metodologia de Cálculo (Fórmulas)
+    story.append(Paragraph("9. Metodologia de Cálculo", heading_style))
     story.append(Paragraph("Velocidade Característica do Vento (Vk): Vk = V0 * S1 * S2 * S3", body_style))
     story.append(Paragraph("Fator S2: S2 = bm * (z/10)^p * Fr", body_style))
     story.append(Paragraph("Pressão Dinâmica do Vento (q): q = 0,613 * Vk^2 (N/m²); q = (0,613 * Vk^2) / 9,81 (kgf/m²)", body_style))
     story.append(Paragraph("Pressão Efetiva (DP): DP = (Ce - Cpi) * q", body_style))
     story.append(Spacer(1, 0.5*cm))
 
-    # Nova Seção: Imagem Inserida pelo Usuário (se houver)
+    # Seção 10: Perfil de Velocidade do Vento
+    story.append(Paragraph("10. Perfil de Velocidade do Vento em Função da Altura", heading_style))
+    z_values = np.linspace(0, max(data['z_fechamento'], data['z_cobertura']) * 1.5, 100)
+    vk_values = [data['v0'] * data['s1'] * calculate_s2(z, data['v0'], data['category'], data['class_'])[0] * data['s3'] for z in z_values]
+    velocity_img = create_velocity_height_graph(z_values, vk_values)
+    story.append(Image(velocity_img, width=12*cm, height=8*cm))
+    story.append(Spacer(1, 0.5*cm))
+
+    # Seção 11: Imagem Inserida pelo Usuário (se houver)
     if uploaded_image is not None:
-        story.append(Paragraph("14. Imagem Inserida pelo Usuário", heading_style))
+        story.append(Paragraph("11. Imagem Inserida pelo Usuário", heading_style))
         image = PILImage.open(uploaded_image)
         img_buffer = BytesIO()
         image.save(img_buffer, format="PNG")
@@ -396,8 +320,8 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
         story.append(Image(img_buffer, width=12*cm, height=8*cm))
         story.append(Spacer(1, 0.5*cm))
 
-    # Finalizar o PDF
-    doc.build(story)
+    # Finalizar o PDF com cabeçalho e rodapé
+    doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
     buffer.seek(0)
     return buffer
 
