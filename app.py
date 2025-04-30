@@ -84,7 +84,7 @@ def generate_pdf(data, results, project_info):
     title_style = ParagraphStyle(name='Title', fontName='Helvetica', fontSize=14, leading=16, alignment=1, spaceAfter=12, textTransform='uppercase', bold=True)
     heading_style = ParagraphStyle(name='Heading', fontName='Helvetica', fontSize=12, leading=14, spaceAfter=10, bold=True, textTransform='uppercase')
     body_style = ParagraphStyle(name='Body', fontName='Helvetica', fontSize=10, leading=12)
-    table_title_style = ParagraphStyle(name='TableTitle', fontName='Helvetica', fontSize=10, leading=12, spaceAfter=6, bold=True)
+    table_title_style = ParagraphStyle(name='TableTitle', fontName='Helvetica', fontSize=9, leading=10, spaceAfter=6, bold=True)
 
     story = []
 
@@ -95,22 +95,22 @@ def generate_pdf(data, results, project_info):
         ["1", "Dados da Edificação", "2"],
         ["2", "Fator de Rajada (Fr)", "3"],
         ["3", "Parâmetros Meteorológicos", "3"],
-        ["4", "Cálculo do Fator S2 por Altura", "4"],
-        ["5", "Velocidades e Pressões Características", "4"],
-        ["6", "Parâmetros para Determinação do Fator S2", "5"],
-        ["7", "Pressões de Vento na Direção X1", "5"],
-        ["8", "Pressões de Vento na Direção X2", "6"],
-        ["9", "Fator S2 Calculado", "6"],
-        ["10", "Velocidade Característica (Vk)", "7"],
-        ["11", "Pressão Dinâmica do Vento (q)", "7"],
-        ["12", "Coeficientes de Pressão Externa (Ce)", "8"],
-        ["13", "Zonas de Pressão Externa", "9"],
-        ["14", "Coeficientes de Pressão Externa (Ce) Selecionados", "9"],
-        ["15", "Coeficiente de Pressão Interno (Cpi)", "10"],
-        ["16", "Pressão Efetiva (DP)", "10"],
-        ["17", "Observações", "12"],
-        ["18", "Legenda de Siglas", "12"],
-        ["19", "Assinatura Técnica", "13"],
+        ["4", "Valores Mínimos do Fator Estatístico S3", "4"],
+        ["5", "Cálculo do Fator S2 por Altura", "4"],
+        ["6", "Velocidades e Pressões Características", "5"],
+        ["7", "Parâmetros para Determinação do Fator S2", "5"],
+        ["8", "Pressões de Vento na Direção X1", "6"],
+        ["9", "Pressões de Vento na Direção X2", "6"],
+        ["10", "Fator S2 Calculado", "7"],
+        ["11", "Velocidade Característica (Vk)", "7"],
+        ["12", "Pressão Dinâmica do Vento (q)", "7"],
+        ["13", "Coeficientes de Pressão Externa (Ce)", "8"],
+        ["14", "Zonas de Pressão Externa", "9"],
+        ["15", "Coeficientes de Pressão Externa (Ce) Selecionados", "9"],
+        ["16", "Coeficiente de Pressão Interno (Cpi)", "10"],
+        ["17", "Pressão Efetiva (DP)", "10"],
+        ["18", "Observações", "12"],
+        ["19", "Legenda de Siglas", "12"],
     ]
     summary_table = Table(summary_data, colWidths=[2*cm, 12*cm, 3*cm])
     summary_table.setStyle(TableStyle([
@@ -169,6 +169,7 @@ def generate_pdf(data, results, project_info):
     story.append(Paragraph("1. Dados da Edificação", heading_style))
     building_data = [
         ["Parâmetro", "Valor"],
+        ["Tipo de Cobertura", data['roof_type']],
         ["Comprimento (a)", f"{data['length']:.2f} m".replace(".", ",")],
         ["Largura (b)", f"{data['width']:.2f} m".replace(".", ",")],
         ["Pé-Direito (h)", f"{data['height']:.2f} m".replace(".", ",")],
@@ -180,7 +181,7 @@ def generate_pdf(data, results, project_info):
         ["Categoria de Rugosidade", f"{data['category']} - {data['category_description']}"],
         ["Classe", data['class']],
         ["Fator Topográfico (S₁)", f"{data['s1']:.2f}".replace(".", ",")],
-        ["Fator Estatístico (S₃)", f"{data['s3']:.2f}".replace(".", ",")],
+        ["Fator Estatístico (S₃)", f"{data['s3']:.2f} (Tp: {data['s3_tp']} anos)".replace(".", ",")],
     ]
     story.append(Paragraph("Tabela 1 – Dados da Edificação", table_title_style))
     building_table = Table(building_data, colWidths=[8*cm, 9*cm])
@@ -254,7 +255,7 @@ def generate_pdf(data, results, project_info):
         ('SPAN', (1,0), (1,1)),
         ('SPAN', (2,0), (2,1)),
         ('SPAN', (0,2), (0,3)),
-        ('SPAN', (0,4), (0,5)),
+        ['SPAN', (0,4), (0,5)),
         ('SPAN', (0,6), (0,7)),
         ('SPAN', (0,8), (0,9)),
         ('SPAN', (0,10), (0,11)),
@@ -268,12 +269,42 @@ def generate_pdf(data, results, project_info):
     story.append(meteo_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 4: Cálculo do Fator S2 por Altura
-    story.append(Paragraph("4. Cálculo do Fator S2 por Altura", heading_style))
+    # Seção 4: Tabela 4 - Valores Mínimos do Fator Estatístico S3
+    story.append(Paragraph("4. Valores Mínimos do Fator Estatístico S3", heading_style))
+    s3_table_data = [
+        ["Grupo", "Descrição", "S3", "Tp (anos)"],
+        ["1", "Estruturas cuja ruína total ou parcial pode afetar a segurança ou possibilidade de socorro a pessoas após uma tempestade destrutiva (hospitais, quartéis de bombeiros e de forças de segurança, edifícios de centros de controle, torres de comunicação etc.). Obras de infraestrutura rodoviária e ferroviária. Estruturas que abrigam substâncias inflamáveis, tóxicas e/ou explosivas. Vedações das edificações do grupo 1 (telhas, vidros, painéis de vedação).", "1,11", "100"],
+        ["2", "Estruturas cuja ruína representa substancial risco à vida humana, particularmente pessoas em aglomerações, crianças e jovens, incluindo, mas não limitadamente a: - edificações com capacidade de aglomeração de mais de 300 pessoas em um mesmo ambiente, como centros de convenções, ginásios, estádios etc.; - creches com capacidade maior do que 150 pessoas; - escolas com capacidade maior do que 250 pessoas. Vedações das edificações do grupo 2 (telhas, vidros, painéis de vedação).", "1,06", "75"],
+        ["3", "Edificações para residências, hotéis, comércio, indústrias. Estruturas ou elementos estruturais desmontáveis com vistas a reutilização. Vedações das edificações do grupo 3 (telhas, vidros, painéis de vedação).", "1,00", "50"],
+        ["4", "Edificações não destinadas à ocupação humana (depósitos, silos) e sem circulação de pessoas no entorno. Vedações das edificações do grupo 4 (telhas, vidros, painéis de vedação).", "0,95", "37"],
+        ["5", "Edificações temporárias não reutilizáveis. Estruturas dos Grupos 1 a 4 durante a construção (fator aplicável em um prazo máximo de 2 anos). Vedações das edificações do grupo 5 (telhas, vidros, painéis de vedação).", "0,83", "15"],
+    ]
+    story.append(Paragraph("Tabela 4 – Valores Mínimos do Fator S3 – NBR 6123:2023", table_title_style))
+    s3_table = Table(s3_table_data, colWidths=[2*cm, 11*cm, 2*cm, 2*cm])
+    s3_table.setStyle(TableStyle([
+        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('ALIGN', (0,0), (0,-1), 'CENTER'),
+        ('ALIGN', (1,0), (1,-1), 'LEFT'),
+        ('ALIGN', (2,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
+        ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+        ('BOX', (0,0), (-1,-1), 0.5, colors.black),
+        ('LEFTPADDING', (0,0), (-1,-1), 10),
+        ('RIGHTPADDING', (0,0), (-1,-1), 10),
+    ]))
+    story.append(s3_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # Seção 5: Cálculo do Fator S2 por Altura
+    story.append(Paragraph("5. Cálculo do Fator S2 por Altura", heading_style))
     s2_table_data = [["z (m)", "S₂"]]
     for z, s2 in results['s2_by_height'].items():
         s2_table_data.append([f"{z:.1f}".replace(".", ","), f"{s2:.6f}".replace(".", ",")])
-    story.append(Paragraph("Tabela 4 – Fator S2 por Altura", table_title_style))
+    story.append(Paragraph("Tabela 5 – Fator S2 por Altura", table_title_style))
     s2_table = Table(s2_table_data, colWidths=[4*cm, 13*cm])
     s2_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
@@ -291,8 +322,8 @@ def generate_pdf(data, results, project_info):
     story.append(s2_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 5: Tabela 5 - Velocidades e Pressões Características
-    story.append(Paragraph("5. Velocidades e Pressões Características", heading_style))
+    # Seção 6: Tabela 6 - Velocidades e Pressões Características
+    story.append(Paragraph("6. Velocidades e Pressões Características", heading_style))
     vk_q_table_data = [
         ["z (m)", "S₁", "S₂", "S₃", "Vₖ (m/s)", "q (kN/m²)"],
         ["0", "1,00", "0,92", "", "38,64", "0,915"],
@@ -312,7 +343,7 @@ def generate_pdf(data, results, project_info):
         ["70", "1,00", "1,17", "", "49,14", "1,48"],
         ["75", "1,00", "1,17", "", "49,14", "1,48"],
     ]
-    story.append(Paragraph("Tabela 5 – Velocidades e Pressões Características – NBR 6123:2023", table_title_style))
+    story.append(Paragraph("Tabela 6 – Velocidades e Pressões Características – NBR 6123:2023", table_title_style))
     vk_q_table = Table(vk_q_table_data, colWidths=[3*cm, 3*cm, 3*cm, 3*cm, 3*cm, 3*cm])
     vk_q_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
@@ -330,14 +361,14 @@ def generate_pdf(data, results, project_info):
     story.append(vk_q_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 6: Tabela 6 - Parâmetros para S2
-    story.append(Paragraph("6. Parâmetros para Determinação do Fator S2", heading_style))
+    # Seção 7: Tabela 7 - Parâmetros para S2
+    story.append(Paragraph("7. Parâmetros para Determinação do Fator S2", heading_style))
     s2_params_table_data = [
         ["Direção do Vento", "Fator de Rajada (Fr)", "Coeficiente bm", "Coeficiente p"],
         ["X1", "0,95", "0,93", "0,10"],
         ["X2", "0,95", "0,93", "0,10"],
     ]
-    story.append(Paragraph("Tabela 6 – Parâmetros para Determinação do Fator S2 – NBR 6123:2023", table_title_style))
+    story.append(Paragraph("Tabela 7 – Parâmetros para Determinação do Fator S2 – NBR 6123:2023", table_title_style))
     s2_params_table = Table(s2_params_table_data, colWidths=[4*cm, 4*cm, 4*cm, 4*cm])
     s2_params_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
@@ -355,8 +386,8 @@ def generate_pdf(data, results, project_info):
     story.append(s2_params_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 7: Tabela 7 - Pressões na Direção X1
-    story.append(Paragraph("7. Pressões de Vento na Direção X1", heading_style))
+    # Seção 8: Tabela 8 - Pressões na Direção X1
+    story.append(Paragraph("8. Pressões de Vento na Direção X1", heading_style))
     x1_table_data = [
         ["Altura z (m)", "Velocidade V₀ (m/s)", "Fator S₁", "Fator S₂", "Fator S₃", "Velocidade Vₖ (m/s)", "Pressão q (kN/m²)"],
         ["5", "42,00", "", "0,82", "", "34,44", "0,727"],
@@ -365,7 +396,7 @@ def generate_pdf(data, results, project_info):
         ["20", "42,00", "", "0,95", "", "39,90", "0,976"],
         ["25", "42,00", "", "0,97", "", "40,74", "1,017"],
     ]
-    story.append(Paragraph("Tabela 7 – Pressões de Vento na Direção X1 – NBR 6123:2023", table_title_style))
+    story.append(Paragraph("Tabela 8 – Pressões de Vento na Direção X1 – NBR 6123:2023", table_title_style))
     x1_table = Table(x1_table_data, colWidths=[2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm])
     x1_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
@@ -383,8 +414,8 @@ def generate_pdf(data, results, project_info):
     story.append(x1_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 8: Tabela 8 - Pressões na Direção X2
-    story.append(Paragraph("8. Pressões de Vento na Direção X2", heading_style))
+    # Seção 9: Tabela 9 - Pressões na Direção X2
+    story.append(Paragraph("9. Pressões de Vento na Direção X2", heading_style))
     x2_table_data = [
         ["Altura z (m)", "Velocidade V₀ (m/s)", "Fator S₁", "Fator S₂", "Fator S₃", "Velocidade Vₖ (m/s)", "Pressão q (kN/m²)"],
         ["5", "42,00", "", "0,82", "", "34,44", "0,727"],
@@ -393,7 +424,7 @@ def generate_pdf(data, results, project_info):
         ["20", "42,00", "", "0,95", "", "39,90", "0,976"],
         ["25", "42,00", "", "0,97", "", "40,74", "1,017"],
     ]
-    story.append(Paragraph("Tabela 8 – Pressões de Vento na Direção X2 – NBR 6123:2023", table_title_style))
+    story.append(Paragraph("Tabela 9 – Pressões de Vento na Direção X2 – NBR 6123:2023", table_title_style))
     x2_table = Table(x2_table_data, colWidths=[2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm])
     x2_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
@@ -411,8 +442,8 @@ def generate_pdf(data, results, project_info):
     story.append(x2_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 9: Fator S2 Calculado
-    story.append(Paragraph("9. Fator S2 Calculado", heading_style))
+    # Seção 10: Fator S2 Calculado
+    story.append(Paragraph("10. Fator S2 Calculado", heading_style))
     s2_data = [
         ["Parâmetro", "Fechamento", "Cobertura"],
         ["Altura z (m)", f"{data['z_fechamento']:.2f}".replace(".", ","), f"{data['z_cobertura']:.2f}".replace(".", ",")],
@@ -421,7 +452,7 @@ def generate_pdf(data, results, project_info):
         ["Fr", f"{data['fr']:.2f}".replace(".", ","), f"{data['fr']:.2f}".replace(".", ",")],
         ["S₂", f"{results['s2_fechamento']:.6f}".replace(".", ","), f"{results['s2_cobertura']:.6f}".replace(".", ",")],
     ]
-    story.append(Paragraph("Tabela 9 – Fator S2 Calculado", table_title_style))
+    story.append(Paragraph("Tabela 10 – Fator S2 Calculado", table_title_style))
     s2_table = Table(s2_data, colWidths=[6*cm, 5.5*cm, 5.5*cm])
     s2_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
@@ -439,13 +470,13 @@ def generate_pdf(data, results, project_info):
     story.append(s2_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 10: Velocidade Característica (Vk)
-    story.append(Paragraph("10. Velocidade Característica (Vk)", heading_style))
+    # Seção 11: Velocidade Característica (Vk)
+    story.append(Paragraph("11. Velocidade Característica (Vk)", heading_style))
     vk_data = [
         ["", "Fechamento", "Cobertura"],
         ["Vₖ (m/s)", f"{results['vk_fechamento']:.2f}".replace(".", ","), f"{results['vk_cobertura']:.2f}".replace(".", ",")],
     ]
-    story.append(Paragraph("Tabela 10 – Velocidade Característica (Vₖ)", table_title_style))
+    story.append(Paragraph("Tabela 11 – Velocidade Característica (Vₖ)", table_title_style))
     vk_table = Table(vk_data, colWidths=[6*cm, 5.5*cm, 5.5*cm])
     vk_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
@@ -463,14 +494,14 @@ def generate_pdf(data, results, project_info):
     story.append(vk_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 11: Pressão Dinâmica (q)
-    story.append(Paragraph("11. Pressão Dinâmica do Vento (q)", heading_style))
+    # Seção 12: Pressão Dinâmica (q)
+    story.append(Paragraph("12. Pressão Dinâmica do Vento (q)", heading_style))
     q_data = [
         ["", "Fechamento", "Cobertura"],
         ["q (N/m²)", f"{results['q_fechamento_nm2']:.2f}".replace(".", ","), f"{results['q_cobertura_nm2']:.2f}".replace(".", ",")],
         ["q (kgf/m²)", f"{results['q_fechamento_kgfm2']:.2f}".replace(".", ","), f"{results['q_cobertura_kgfm2']:.2f}".replace(".", ",")],
     ]
-    story.append(Paragraph("Tabela 11 – Pressão Dinâmica do Vento (q)", table_title_style))
+    story.append(Paragraph("Tabela 12 – Pressão Dinâmica do Vento (q)", table_title_style))
     q_table = Table(q_data, colWidths=[6*cm, 5.5*cm, 5.5*cm])
     q_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
@@ -488,8 +519,8 @@ def generate_pdf(data, results, project_info):
     story.append(q_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 12: Tabela 12 - Coeficientes de Pressão Externa (Ce)
-    story.append(Paragraph("12. Coeficientes de Pressão Externa (Ce)", heading_style))
+    # Seção 13: Tabela 13 - Coeficientes de Pressão Externa (Ce)
+    story.append(Paragraph("13. Coeficientes de Pressão Externa (Ce)", heading_style))
     ce_table_data = [
         ["θ (°)", "Valores de Ce para ângulo de incidência do vento α"],
         ["", "90°", "", "45°", "", "0°", "", "-45°", "", "-90°", ""],
@@ -509,7 +540,7 @@ def generate_pdf(data, results, project_info):
         ["25", "-1,8", "-0,7", "-0,9", "-0,9", "-2,0"],
         ["30", "-1,8", "-0,5", "-0,5", "-0,5", "-2,0"],
     ]
-    story.append(Paragraph("Tabela 12 – Coeficientes de Pressão Externa (Ce) – NBR 6123:2023", table_title_style))
+    story.append(Paragraph("Tabela 13 – Coeficientes de Pressão Externa (Ce) – NBR 6123:2023", table_title_style))
     ce_table = Table(ce_table_data, colWidths=[1.5*cm] + [1.5*cm]*10)
     ce_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
@@ -533,22 +564,22 @@ def generate_pdf(data, results, project_info):
     story.append(ce_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 13: Figura das Zonas de Pressão Externa
-    story.append(Paragraph("13. Zonas de Pressão Externa", heading_style))
+    # Seção 14: Figura das Zonas de Pressão Externa
+    story.append(Paragraph("14. Zonas de Pressão Externa", heading_style))
     story.append(Paragraph("Figura 1 – Zonas de Pressão Externa (H, L, I, J) – NBR 6123:2023", table_title_style))
     pressure_zones_img = create_pressure_zones_image()
     story.append(Image(pressure_zones_img, width=15*cm, height=5*cm))
     story.append(Paragraph("H: Alta sucção (b/2 a partir da borda de barlavento); L: Baixa sucção (de b/2 até a/2); I, J: Zonas laterais.", body_style))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 14: Coeficientes de Pressão Externa (Ce) Selecionados
-    story.append(Paragraph("14. Coeficientes de Pressão Externa (Ce) Selecionados", heading_style))
+    # Seção 15: Coeficientes de Pressão Externa (Ce) Selecionados
+    story.append(Paragraph("15. Coeficientes de Pressão Externa (Ce) Selecionados", heading_style))
     ce_selected_data = [
         ["Direção do Vento", "Fechamento", "Cobertura"],
         ["0º/180º (Longitudinal)", ", ".join(map(lambda x: format_with_comma(x), data['ce_fechamento_0'])), ", ".join(map(lambda x: format_with_comma(x), data['ce_cobertura_0']))],
         ["90º/270º (Transversal)", ", ".join(map(lambda x: format_with_comma(x), data['ce_fechamento_90'])), ", ".join(map(lambda x: format_with_comma(x), data['ce_cobertura_90']))],
     ]
-    story.append(Paragraph("Tabela 13 – Coeficientes de Pressão Externa (Ce) Selecionados", table_title_style))
+    story.append(Paragraph("Tabela 14 – Coeficientes de Pressão Externa (Ce) Selecionados", table_title_style))
     ce_selected_table = Table(ce_selected_data, colWidths=[6*cm, 5.5*cm, 5.5*cm])
     ce_selected_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
@@ -566,18 +597,18 @@ def generate_pdf(data, results, project_info):
     story.append(ce_selected_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 15: Coeficiente de Pressão Interno (Cpi)
-    story.append(Paragraph("15. Coeficiente de Pressão Interno (Cpi)", heading_style))
+    # Seção 16: Coeficiente de Pressão Interno (Cpi)
+    story.append(Paragraph("16. Coeficiente de Pressão Interno (Cpi)", heading_style))
     story.append(Paragraph(f"Caso Selecionado (NBR 6123:2023 - Item 6.3.2.1): {data['cpi_case']}", body_style))
     story.append(Paragraph(f"Descrição: {data['cpi_case_description']}", body_style))
     story.append(Paragraph(f"Cpi: {', '.join(map(lambda x: format_with_comma(x), data['cpi']))}", body_style))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 16: Pressão Efetiva (DP)
-    story.append(Paragraph("16. Pressão Efetiva (DP) = (Ce - Cpi) × q", heading_style))
-    table_counter = 14
+    # Seção 17: Pressão Efetiva (DP)
+    story.append(Paragraph("17. Pressão Efetiva (DP) = (Ce - Cpi) × q", heading_style))
+    table_counter = 15
     for direction, dp_data in results['dp'].items():
-        story.append(Paragraph(f"16.{table_counter - 13}. Vento a {direction}", heading_style))
+        story.append(Paragraph(f"17.{table_counter - 14}. Vento a {direction}", heading_style))
         dp_table_data = [["Ce", "Cpi", "DP (kgf/m²)"]]
         for ce, cpi, dp in dp_data:
             dp_table_data.append([f"{ce:.2f}".replace(".", ","), f"{cpi:.2f}".replace(".", ","), f"{dp:.2f}".replace(".", ",")])
@@ -600,8 +631,8 @@ def generate_pdf(data, results, project_info):
         story.append(Spacer(1, 0.5*cm))
         table_counter += 1
 
-    # Seção 17: Observações
-    story.append(Paragraph("17. Observações", heading_style))
+    # Seção 18: Observações
+    story.append(Paragraph("18. Observações", heading_style))
     observations = [
         "Os valores de DP são aplicáveis ao dimensionamento do sistema de vedação (fechamento e cobertura).",
         "Verificar a combinação mais crítica para cada elemento.",
@@ -611,8 +642,8 @@ def generate_pdf(data, results, project_info):
         story.append(Paragraph(obs, body_style))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 18: Legenda de Siglas
-    story.append(Paragraph("18. Legenda de Siglas", heading_style))
+    # Seção 19: Legenda de Siglas
+    story.append(Paragraph("19. Legenda de Siglas", heading_style))
     legend_data = [
         ["Sigla", "Descrição"],
         ["z", "Altura acima do terreno (m)"],
@@ -646,13 +677,6 @@ def generate_pdf(data, results, project_info):
     story.append(legend_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 19: Assinatura Técnica
-    story.append(Paragraph("19. Assinatura Técnica", heading_style))
-    story.append(Paragraph("Responsável Técnico: _____________________________", body_style))
-    story.append(Paragraph("CREA: _____________________________", body_style))
-    story.append(Paragraph("Data: _____________________________", body_style))
-    story.append(Spacer(1, 0.5*cm))
-
     doc.build(story)
     buffer.seek(0)
     return buffer
@@ -670,6 +694,7 @@ project_info = {
 }
 
 st.header("Dados da Edificação")
+roof_type = st.selectbox("Tipo de Cobertura", ["Uma Água", "Duas Águas"])
 col1, col2 = st.columns(2)
 with col1:
     length = st.number_input("Comprimento (m)", min_value=0.0, value=48.0)
@@ -710,7 +735,15 @@ fr = fr_data[class_]
 
 st.header("Fatores S₁, S₂, S₃")
 s1 = st.selectbox("Fator Topográfico (S₁)", [1.0, 0.9, 1.1], help="1,0: Terreno plano; 0,9: Depressão; 1,1: Elevação.")
-s3 = st.selectbox("Fator Estatístico (S₃)", [1.0, 1.11], help="1,0: Edificações residenciais/industriais (Tp=50 anos); 1,11: Estruturas com maior risco.")
+s3_options = {
+    1.11: "1,11 (Grupo 1: Estruturas críticas como hospitais, quartéis de bombeiros, torres de comunicação - Tp: 100 anos)",
+    1.06: "1,06 (Grupo 2: Estruturas com aglomerações ou crianças, como ginásios e escolas - Tp: 75 anos)",
+    1.00: "1,00 (Grupo 3: Residências, hotéis, comércio, indústrias - Tp: 50 anos)",
+    0.95: "0,95 (Grupo 4: Depósitos, silos, sem circulação de pessoas - Tp: 37 anos)",
+    0.83: "0,83 (Grupo 5: Edificações temporárias não reutilizáveis - Tp: 15 anos)",
+}
+s3 = st.selectbox("Fator Estatístico (S₃)", list(s3_options.keys()), format_func=lambda x: s3_options[x])
+s3_tp = {1.11: 100, 1.06: 75, 1.00: 50, 0.95: 37, 0.83: 15}[s3]
 st.write(f"Parâmetros S₂: bm = {format_with_comma(bm)}, p = {format_with_comma(p)}, Fr = {format_with_comma(fr)}")
 
 # Cálculo de S2 por altura (de 0 a 75 m, a cada 5 m)
@@ -807,6 +840,7 @@ results = {
 
 # Dados para o relatório
 data = {
+    "roof_type": roof_type,
     "length": length,
     "width": width,
     "height": height,
@@ -820,6 +854,7 @@ data = {
     "class": class_,
     "s1": s1,
     "s3": s3,
+    "s3_tp": s3_tp,
     "bm": bm,
     "p": p,
     "fr": fr,
