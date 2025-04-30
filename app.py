@@ -280,31 +280,33 @@ def generate_pdf(data, results, project_info):
     # Seção 4: Tabela 4 - Valores Mínimos do Fator Estatístico S3
     story.append(Paragraph("4. Valores Mínimos do Fator Estatístico S3", heading_style))
     s3_table_data = [
-        ["Grupo", "Descrição", "S3", "Tp (anos)"],
-        ["1", "Estruturas cuja ruína total ou parcial pode afetar a segurança ou possibilidade de socorro a pessoas após uma tempestade destrutiva (hospitais, quartéis de bombeiros e de forças de segurança, edifícios de centros de controle, torres de comunicação etc.). Obras de infraestrutura rodoviária e ferroviária. Estruturas que abrigam substâncias inflamáveis, tóxicas e/ou explosivas. Vedações das edificações do grupo 1 (telhas, vidros, painéis de vedação).", "1,11", "100"],
-        ["2", "Estruturas cuja ruína representa substancial risco à vida humana, particularmente pessoas em aglomerações, crianças e jovens, incluindo, mas não limitadamente a: - edificações com capacidade de aglomeração de mais de 300 pessoas em um mesmo ambiente, como centros de convenções, ginásios, estádios etc.; - creches com capacidade maior do que 150 pessoas; - escolas com capacidade maior do que 250 pessoas. Vedações das edificações do grupo 2 (telhas, vidros, painéis de vedação).", "1,06", "75"],
-        ["3", "Edificações para residências, hotéis, comércio, indústrias. Estruturas ou elementos estruturais desmontáveis com vistas a reutilização. Vedações das edificações do grupo 3 (telhas, vidros, painéis de vedação).", "1,00", "50"],
-        ["4", "Edificações não destinadas à ocupação humana (depósitos, silos) e sem circulação de pessoas no entorno. Vedações das edificações do grupo 4 (telhas, vidros, painéis de vedação).", "0,95", "37"],
-        ["5", "Edificações temporárias não reutilizáveis. Estruturas dos Grupos 1 a 4 durante a construção (fator aplicável em um prazo máximo de 2 anos). Vedações das edificações do grupo 5 (telhas, vidros, painéis de vedação).", "0,83", "15"],
+    ["Grupo", "Descrição", "S3", "Tp (anos)"],
+    ["1", "Estruturas cuja ruína total ou parcial pode afetar a segurança ou possibilidade de socorro a pessoas após uma tempestade destrutiva (hospitais, quartéis de bombeiros e de forças de segurança, edifícios de centros de controle, torres de comunicação etc.). Obras de infraestrutura rodoviária e ferroviária. Estruturas que abrigam substâncias inflamáveis, tóxicas e/ou explosivas. Vedações das edificações do grupo 1 (telhas, vidros, painéis de vedação).", "1,11", "100"],
+    ["2", "Estruturas cuja ruína representa substancial risco à vida humana, particularmente pessoas em aglomerações, crianças e jovens, incluindo, mas não limitadamente a: - edificações com capacidade de aglomeração de mais de 300 pessoas em um mesmo ambiente, como centros de convenções, ginásios, estádios etc.; - creches com capacidade maior do que 150 pessoas; - escolas com capacidade maior do que 250 pessoas. Vedações das edificações do grupo 2 (telhas, vidros, painéis de vedação).", "1,06", "75"],
+    ["3", "Edificações para residências, hotéis, comércio, indústrias. Estruturas ou elementos estruturais desmontáveis com vistas a reutilização. Vedações das edificações do grupo 3 (telhas, vidros, painéis de vedação).", "1,00", "50"],
+    ["4", "Edificações não destinadas à ocupação humana (depósitos, silos) e sem circulação de pessoas no entorno. Vedações das edificações do grupo 4 (telhas, vidros, painéis de vedação).", "0,95", "37"],
+    ["5", "Edificações temporárias não reutilizáveis. Estruturas dos Grupos 1 a 4 durante a construção (fator aplicável em um prazo máximo de 2 anos). Vedações das edificações do grupo 5 (telhas, vidros, painéis de vedação).", "0,83", "15"],
     ]
     story.append(Paragraph("Tabela 4 – Valores Mínimos do Fator S3 – NBR 6123:2023", table_title_style))
     s3_table = Table(s3_table_data, colWidths=[2*cm, 11*cm, 2*cm, 2*cm])
     s3_table.setStyle(TableStyle([
-        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 8),
-        ('ALIGN', (0,0), (0,-1), 'CENTER'),
-        ('ALIGN', (1,0), (1,-1), 'LEFT'),
-        ('ALIGN', (2,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
-        ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
-        ('BOX', (0,0), (-1,-1), 0.5, colors.black),
-        ('LEFTPADDING', (0,0), (-1,-1), 10),
-        ('RIGHTPADDING', (0,0), (-1,-1), 10),
-        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
-        ('WORDWRAP', (0,0), (-1,-1), 'CJK'),  # Permite quebra de linha automática
+    ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+    ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+    ('FONTSIZE', (0,0), (-1,-1), 8),
+    ('ALIGN', (0,0), (0,-1), 'CENTER'),
+    ('ALIGN', (1,0), (1,-1), 'LEFT'),
+    ('ALIGN', (2,0), (-1,-1), 'CENTER'),
+    ('VALIGN', (0,0), (0,-1), 'MIDDLE'),
+    ('VALIGN', (1,0), (1,-1), 'TOP'),
+    ('VALIGN', (2,0), (-1,-1), 'MIDDLE'),
+    ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+    ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
+    ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+    ('BOX', (0,0), (-1,-1), 0.5, colors.black),
+    ('LEFTPADDING', (0,0), (-1,-1), 10),
+    ('RIGHTPADDING', (0,0), (-1,-1), 10),
+    ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+    ('WORDWRAP', (0,0), (-1,-1), 'CJK'),  # Permite quebra de linha automática
     ]))
     story.append(s3_table)
     story.append(Spacer(1, 0.5*cm))
