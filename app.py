@@ -5,8 +5,8 @@ from fpdf import FPDF
 from PIL import Image
 import io
 
-# Função para gerar o PDF
-def generate_pdf(uploaded_image=None):
+# Função para gerar o PDF com base nos dados inseridos pelo usuário
+def generate_pdf(dados_edificacao, uploaded_image=None):
     pdf = FPDF()
     
     # Capa (Página 1)
@@ -59,7 +59,7 @@ def generate_pdf(uploaded_image=None):
     for secao, titulo, pagina in sumario:
         pdf.cell(0, 10, f"Seção {secao} - {titulo} - Página {pagina}", ln=True)
 
-    # Metodologia de Cálculo (Fórmulas)
+    # Metodologia de Cálculo (Fórmulas) - Nova Seção
     pdf.add_page()
     pdf.set_font("Arial", "B", 14)
     pdf.cell(0, 10, "Metodologia de Cálculo", ln=True)
@@ -73,28 +73,13 @@ def generate_pdf(uploaded_image=None):
     pdf.ln(5)
     pdf.multi_cell(0, 10, "Pressão Efetiva (DP):\nDP = (Ce - Cpi) * q")
 
-    # Seção 1: Dados da Edificação
+    # Seção 1: Dados da Edificação (usando dados preenchidos pelo usuário)
     pdf.add_page()
     pdf.set_font("Arial", "B", 14)
     pdf.cell(0, 10, "1. Dados da Edificação", ln=True)
     pdf.ln(5)
     pdf.set_font("Arial", "", 12)
-    dados_edificacao = [
-        ("Tipo de Cobertura", "Duas Águas"),
-        ("Comprimento (a)", "48,00 m"),
-        ("Largura (b)", "16,00 m"),
-        ("Pé-Direito (h)", "10,90 m"),
-        ("Inclinação da Cobertura", "10,00 % (5,71°)"),
-        ("Altura Média - Fechamento (z)", "13,00 m"),
-        ("Altura Média - Cobertura (z)", "13,80 m"),
-        ("Distância Entre Pórticos", "5,00 m"),
-        ("Velocidade Básica do Vento (V0)", "42,00 m/s"),
-        ("Categoria de Rugosidade", "I - I: Mar ou costa com poucos obstáculos"),
-        ("Classe", "A"),
-        ("Fator Topográfico (S1)", "1,00"),
-        ("Fator Estatístico (S3)", "1,11 (Tp: 100 anos)"),
-    ]
-    for parametro, valor in dados_edificacao:
+    for parametro, valor in dados_edificacao.items():
         pdf.cell(0, 10, f"{parametro}: {valor}", ln=True)
 
     # Seção 2: Fator de Rajada (Fr)
@@ -138,11 +123,25 @@ def generate_pdf(uploaded_image=None):
     pdf.set_font("Arial", "", 12)
     valores_s3 = [
         ("Grupo | Descrição | S3 | Tp (anos)", ""),
-        ("1 | Estruturas cuja ruína total ou parcial pode afetar a segurança ou possibilidade de socorro a pessoas após uma tempestade destrutiva (hospitais, quartéis de bombeiros e de forças de segurança, edifícios de centros de controle, torres de comunicação etc.). Obras de infraestrutura crítica. Armazenamento de substâncias perigosas e/ou tóxicas e/ou explosivas. Vedações das edificações do grupo 1 (telhas, vidros, painéis de vedação).", "1,11", "100"),
-        ("2 | Estruturas cuja ruína representa substancial risco à vida humana, particularmente pessoas em aglomerações, crianças e jovens, incluindo, mas não limitadamente a: edificações com capacidade de aglomeração de mais de 300 pessoas em um mesmo ambiente, como centros de convenções, ginásios, estádios etc.; creches com capacidade maior do que 150 pessoas; escolas com capacidade maior do que 250 pessoas. Vedações das edificações do grupo 2 (telhas, vidros, painéis de vedação).", "1,06", "75"),
-        ("3 | Edificações para residências, hotéis, comércio, indústrias. Estruturas ou elementos estruturais desmontáveis com vistas a reutilização. Vedações das edificações do grupo 3 (telhas, vidros, painéis de vedação).", "1,00", "50"),
-        ("4 | Edificações não destinadas à ocupação humana (depósitos, silos) e sem circulação de pessoas no entorno. Vedações das edificações do grupo 4 (telhas, vidros, painéis de vedação).", "0,95", "37"),
-        ("5 | Edificações temporárias não reutilizáveis. Estruturas dos Grupos 1 a 4 durante a construção (fator aplicável em um prazo máximo de 2 anos). Vedações das edificações do grupo 5 (telhas, vidros, painéis de vedação).", "0,83", "15"),
+        ("1 | Estruturas cuja ruína total ou parcial pode afetar a segurança ou possibilidade " +
+         "de socorro a pessoas após uma tempestade destrutiva (hospitais, quartéis de bombeiros " +
+         "e de forças de segurança, edifícios de centros de controle, torres de comunicação etc.). " +
+         "Obras de infraestrutura crítica. Armazenamento de substâncias perigosas e/ou tóxicas " +
+         "e/ou explosivas. Vedações das edificações do grupo 1 (telhas, vidros, painéis de vedação).", "1,11", "100"),
+        ("2 | Estruturas cuja ruína representa substancial risco à vida humana, particularmente " +
+         "pessoas em aglomerações, crianças e jovens, incluindo, mas não limitadamente a: " +
+         "edificações com capacidade de aglomeração de mais de 300 pessoas em um mesmo ambiente, " +
+         "como centros de convenções, ginásios, estádios etc.; creches com capacidade maior do que " +
+         "150 pessoas; escolas com capacidade maior do que 250 pessoas. Vedações das edificações " +
+         "do grupo 2 (telhas, vidros, painéis de vedação).", "1,06", "75"),
+        ("3 | Edificações para residências, hotéis, comércio, indústrias. Estruturas ou elementos " +
+         "estruturais desmontáveis com vistas a reutilização. Vedações das edificações do grupo 3 " +
+         "(telhas, vidros, painéis de vedação).", "1,00", "50"),
+        ("4 | Edificações não destinadas à ocupação humana (depósitos, silos) e sem circulação de " +
+         "pessoas no entorno. Vedações das edificações do grupo 4 (telhas, vidros, painéis de vedação).", "0,95", "37"),
+        ("5 | Edificações temporárias não reutilizáveis. Estruturas dos Grupos 1 a 4 durante a " +
+         "construção (fator aplicável em um prazo máximo de 2 anos). Vedações das edificações do " +
+         "grupo 5 (telhas, vidros, painéis de vedação).", "0,83", "15"),
     ]
     for grupo, descricao, s3, tp in valores_s3:
         pdf.multi_cell(0, 10, f"{grupo} | {descricao} | {s3} | {tp}")
@@ -275,7 +274,7 @@ def generate_pdf(uploaded_image=None):
     pdf.ln(5)
     pdf.set_font("Arial", "", 12)
     velocidade_vk = [
-        (" | Fechamento | Cobertura", ""),
+        (" | Fechamento | Cob No ertura", ""),
         ("Vk (m/s) | 52,10 | 52,28", ""),
     ]
     for linha in velocidade_vk:
@@ -468,317 +467,345 @@ def generate_pdf(uploaded_image=None):
     return pdf
 
 # Interface do Streamlit
-# Capa
-st.markdown("""
-# Relatório de Cálculo de Ações do Vento
-**Conforme ABNT NBR 6123:2023**
+st.title("Relatório de Cálculo de Ações do Vento")
+st.markdown("Preencha os dados abaixo para gerar o relatório.")
 
-| **Cliente** | Construtora ABC |
-| **Obra** | Edifício Residencial |
-| **Localização** | São Paulo, SP |
-| **Cód. do Projeto** | 2025-001 |
-| **Número do Documento** | REL-001-2025 |
-| **Revisão** | 0 |
-| **Data** | 29/04/2025 |
-| **Cálculo** | João Silva |
-| **Aprovação** | [A Definir] |
-| **Empresa** | xAI Engenharia Ltda. |
-| **Contato** | contato@xaiengenharia.com |
-""")
+# Formulário para preenchimento dos dados da edificação
+st.subheader("Dados da Edificação")
+dados_edificacao = {}
 
-# Sumário
-st.markdown("""
-## Sumário
-
-| Seção | Título | Página |
-|-------|--------|--------|
-| 1     | Dados da Edificação | 2 |
-| 2     | Fator de Rajada (Fr) | 3 |
-| 3     | Parâmetros Meteorológicos | 3 |
-| 4     | Valores Mínimos do Fator Estatístico S3 | 4 |
-| 5     | Cálculo do Fator S2 por Altura | 4 |
-| 6     | Velocidades e Pressões Características | 5 |
-| 7     | Parâmetros para Determinação do Fator S2 | 5 |
-| 8     | Pressões de Vento na Direção X1 | 6 |
-| 9     | Pressões de Vento na Direção X2 | 6 |
-| 10    | Fator S2 Calculado | 7 |
-| 11    | Velocidade Característica (Vk) | 7 |
-| 12    | Pressão Dinâmica do Vento (q) | 7 |
-| 13    | Coeficientes de Pressão Externa (Ce) | 8 |
-| 14    | Zonas de Pressão Externa | 9 |
-| 15    | Coeficientes de Pressão Externa (Ce) Selecionados | 9 |
-| 16    | Coeficiente de Pressão Interno (Cpi) | 10 |
-| 17    | Pressão Efetiva (DP) | 10 |
-| 18    | Observações | 12 |
-| 19    | Legenda de Siglas | 12 |
-""")
-
-# Metodologia de Cálculo (Fórmulas)
-st.markdown("""
-## Metodologia de Cálculo
-**Velocidade Característica do Vento (Vk):**  
-\[
-Vk = V0 \cdot S1 \cdot S2 \cdot S3
-\]
-
-**Fator S2:**  
-\[
-S2 = bm \cdot \left(\frac{z}{10}\right)^p \cdot Fr
-\]
-
-**Pressão Dinâmica do Vento (q):**  
-\[
-q = 0,613 \cdot Vk^2 \quad (\text{N/m}^2)
-\]
-\[
-q = \frac{0,613 \cdot Vk^2}{9,81} \quad (\text{kgf/m}^2)
-\]
-
-**Pressão Efetiva (DP):**  
-\[
-DP = (Ce - Cpi) \cdot q
-\]
-""")
-
-# Seção 1: Dados da Edificação
-st.markdown("## 1. Dados da Edificação")
-data_edificacao = {
-    "Parâmetro": ["Tipo de Cobertura", "Comprimento (a)", "Largura (b)", "Pé-Direito (h)", "Inclinação da Cobertura", "Altura Média - Fechamento (z)", "Altura Média - Cobertura (z)", "Distância Entre Pórticos", "Velocidade Básica do Vento (V0)", "Categoria de Rugosidade", "Classe", "Fator Topográfico (S1)", "Fator Estatístico (S3)"],
-    "Valor": ["Duas Águas", "48,00 m", "16,00 m", "10,90 m", "10,00 % (5,71°)", "13,00 m", "13,80 m", "5,00 m", "42,00 m/s", "I - I: Mar ou costa com poucos obstáculos", "A", "1,00", "1,11 (Tp: 100 anos)"]
-}
-st.table(data_edificacao)
-
-# Seção 2: Fator de Rajada (Fr)
-st.markdown("## 2. Fator de Rajada (Fr)")
-data_fr = {
-    "Fr": ["", "1,00", "0,98", "0,95"],
-    "Classes": ["", "A", "B", "C"]
-}
-st.table(data_fr)
-
-# Seção 3: Parâmetros Meteorológicos
-st.markdown("## 3. Parâmetros Meteorológicos")
-data_meteorologicos = {
-    "Categoria": ["I", "", "II", "", "III", "", "IV", "", "V", ""],
-    "Zg (m)": ["250", "", "300", "", "350", "", "420", "", "500", ""],
-    "Parâmetro": ["bm", "p", "bm", "p", "bm", "p", "bm", "p", "bm", "p"],
-    "A": ["1,10", "0,06", "1,00", "0,085", "0,94", "0,10", "0,86", "0,12", "0,74", "0,15"],
-    "B": ["1,11", "0,065", "1,00", "0,09", "0,94", "0,105", "0,85", "0,125", "0,73", "0,16"],
-    "C": ["1,12", "0,07", "1,00", "0,10", "0,93", "0,115", "0,84", "0,135", "0,71", "0,175"]
-}
-st.table(data_meteorologicos)
-
-# Seção 4: Valores Mínimos do Fator Estatístico S3
-st.markdown("## 4. Valores Mínimos do Fator Estatístico S3")
-data_s3 = {
-    "Grupo": ["1", "2", "3", "4", "5"],
-    "Descrição": [
-        "Estruturas cuja ruína total ou parcial pode afetar a segurança ou possibilidade de socorro a pessoas após uma tempestade destrutiva (hospitais, quartéis de bombeiros e de forças de segurança, edifícios de centros de controle, torres de comunicação etc.). Obras de infraestrutura crítica. Armazenamento de substâncias perigosas e/ou tóxicas e/ou explosivas. Vedações das edificações do grupo 1 (telhas, vidros, painéis de vedação).",
-        "Estruturas cuja ruína representa substancial risco à vida humana, particularmente pessoas em aglomerações, crianças e jovens, incluindo, mas não limitadamente a: edificações com capacidade de aglomeração de mais de 300 pessoas em um mesmo ambiente, como centros de convenções, ginásios, estádios etc.; creches com capacidade maior do que 150 pessoas; escolas com capacidade maior do que 250 pessoas. Vedações das edificações do grupo 2 (telhas, vidros, painéis de vedação).",
-        "Edificações para residências, hotéis, comércio, indústrias. Estruturas ou elementos estruturais desmontáveis com vistas a reutilização. Vedações das edificações do grupo 3 (telhas, vidros, painéis de vedação).",
-        "Edificações não destinadas à ocupação humana (depósitos, silos) e sem circulação de pessoas no entorno. Vedações das edificações do grupo 4 (telhas, vidros, painéis de vedação).",
-        "Edificações temporárias não reutilizáveis. Estruturas dos Grupos 1 a 4 durante a construção (fator aplicável em um prazo máximo de 2 anos). Vedações das edificações do grupo 5 (telhas, vidros, painéis de vedação).",
-    ],
-    "S3": ["1,11", "1,06", "1,00", "0,95", "0,83"],
-    "Tp (anos)": ["100", "75", "50", "37", "15"]
-}
-st.table(data_s3)
-
-# Seção 5: Cálculo do Fator S2 por Altura
-st.markdown("## 5. Cálculo do Fator S2 por Altura")
-data_s2_altura = {
-    "z (m)": ["0,0", "5,0", "10,0", "15,0", "20,0", "25,0", "30,0", "35,0", "40,0", "45,0", "50,0", "55,0", "60,0", "65,0", "70,0", "75,0"],
-    "S2": ["0,000000", "1,055191", "1,100000", "1,127089", "1,146712", "1,162168", "1,174952", "1,185869", "1,195408", "1,203886", "1,211521", "1,218469", "1,224847", "1,230743", "1,236228", "1,241356"]
-}
-st.table(data_s2_altura)
-
-# Seção 6: Velocidades e Pressões Características
-st.markdown("## 6. Velocidades e Pressões Características")
-data_velocidades = {
-    "z (m)": ["0,0", "5,0", "10,0", "15,0", "20,0", "25,0", "30,0", "35,0", "40,0", "45,0", "50,0", "55,0", "60,0", "65,0", "70,0", "75,0"],
-    "S1": ["1,00"] * 16,
-    "S2": ["0,00", "1,06", "1,10", "1,13", "1,15", "1,16", "1,17", "1,19", "1,20", "1,20", "1,21", "1,22", "1,22", "1,23", "1,24", "1,24"],
-    "S3": ["1,11"] * 16,
-    "Vk (m/s)": ["0,00", "49,19", "51,28", "52,54", "53,46", "54,18", "54,78", "55,29", "55,73", "56,13", "56,48", "56,81", "57,10", "57,38", "57,63", "57,87"],
-    "q (kN/m²)": ["0,000", "1,482", "1,611", "1,691", "1,750", "1,798", "1,838", "1,872", "1,902", "1,929", "1,954", "1,976", "1,997", "2,016", "2,034", "2,051"]
-}
-st.table(data_velocidades)
-
-# Gráfico de Velocidade x Altura
-df_velocidade = pd.DataFrame({
-    "Altura (z) [m]": [float(z.replace(",", ".")) for z in data_velocidades["z (m)"]],
-    "Velocidade Vk (m/s)": [float(vk.replace(",", ".")) for vk in data_velocidades["Vk (m/s)"]]
-})
-fig = px.line(df_velocidade, x="Altura (z) [m]", y="Velocidade Vk (m/s)", title="Velocidade Característica (Vk) em Função da Altura (z)")
-st.plotly_chart(fig)
-
-# Seção 7: Parâmetros para Determinação do Fator S2
-st.markdown("## 7. Parâmetros para Determinação do Fator S2")
-data_params_s2 = {
-    "Direção do Vento": ["X1", "X2"],
-    "Fator de Rajada (Fr)": ["0,95", "0,95"],
-    "Coeficiente bm": ["0,93", "0,93"],
-    "Coeficiente p": ["0,10", "0,10"]
-}
-st.table(data_params_s2)
-
-# Seção 8: Pressões de Vento na Direção X1
-st.markdown("## 8. Pressões de Vento na Direção X1")
-data_pressoes_x1 = {
-    "Altura z (m)": ["5,0", "10,0", "15,0", "20,0", "25,0"],
-    "Fator S2": ["1,06", "1,10", "1,13", "1,15", "1,16"],
-    "S1": ["1,00"] * 5,
-    "S3": ["1,11"] * 5,
-    "Velocidade Vk (m/s)": ["49,19", "51,28", "52,54", "53,46", "54,18"],
-    "Pressão q (kN/m²)": ["1,482", "1,611", "1,691", "1,750", "1,798"]
-}
-st.table(data_pressoes_x1)
-
-# Seção 9: Pressões de Vento na Direção X2
-st.markdown("## 9. Pressões de Vento na Direção X2")
-data_pressoes_x2 = {
-    "Altura z (m)": ["5,0", "10,0", "15,0", "20,0", "25,0"],
-    "Fator S2": ["1,06", "1,10", "1,13", "1,15", "1,16"],
-    "S1": ["1,00"] * 5,
-    "S3": ["1,11"] * 5,
-    "Velocidade Vk (m/s)": ["49,19", "51,28", "52,54", "53,46", "54,18"],
-    "Pressão q (kN/m²)": ["1,482", "1,611", "1,691", "1,750", "1,798"]
-}
-st.table(data_pressoes_x2)
-
-# Seção 10: Fator S2 Calculado
-st.markdown("## 10. Fator S2 Calculado")
-data_s2_calculado = {
-    "Parâmetro": ["Altura z (m)", "bm", "p", "Fr", "S2"],
-    "Fechamento": ["13,00", "1,10", "0,060", "1,00", "1,117453"],
-    "Cobertura": ["13,80", "1,10", "0,060", "1,00", "1,121464"]
-}
-st.table(data_s2_calculado)
-
-# Seção 11: Velocidade Característica (Vk)
-st.markdown("## 11. Velocidade Característica (Vk)")
-data_vk = {
-    "": ["Vk (m/s)"],
-    "Fechamento": ["52,10"],
-    "Cobertura": ["52,28"]
-}
-st.table(data_vk)
-
-# Seção 12: Pressão Dinâmica do Vento (q)
-st.markdown("## 12. Pressão Dinâmica do Vento (q)")
-data_q = {
-    "": ["q (N/m²)", "q (kgf/m²)"],
-    "Fechamento": ["1662,30", "169,51"],
-    "Cobertura": ["1674,25", "170,73"]
-}
-st.table(data_q)
-
-# Seção 13: Coeficientes de Pressão Externa (Ce)
-st.markdown("## 13. Coeficientes de Pressão Externa (Ce)")
-data_ce = {
-    "θ (°)": ["5", "10", "15", "20 Bump", "", "30", "", "θ (°)", "5", "10", "15", "20", "25", "30"],
-    "90° HeI": ["-1,0", "-1,0", "-0,9", "-0,8", "-0,7", "-0,5", "", "", "", "", "", "", "", ""],
-    "90° LeJ": ["-0,5", "-0,5", "-0,5", "", "-0,5", "-0,5", "", "", "", "", "", "", "", ""],
-    "45° H": ["-1,0", "-1,0", "-1,0", "", "-1,0", "-1,0", "", "", "", "", "", "", "", ""],
-    "45° L": ["-0,9", "-0,8", "-0,7", "", "-0,6", "-0,6", "", "", "", "", "", "", "", ""],
-    "0° HeLa": ["-1,0", "-1,0", "-1,0", "-0,5", "-0,8", "-0,8", "", "", "", "", "", "", "", ""],
-    "0° HeLa_2": ["-0,5", "-0,5", "-0,5", "-0,5", "-0,5", "-0,5", "", "", "", "", "", "", "", ""],
-    "-45° H": ["-0,9", "-0,8", "-0,6", "-0,5", "-0,3", "-0,1", "", "", "", "", "", "", "", ""],
-    "-45° L": ["-1,0", "-1,0", "-1,0", "-1,0", "-0,9", "-0,8", "", "", "", "", "", "", "", ""],
-    "-90° HeI": ["-0,5", "-0,4", "-0,3", "-0,2", "-0,1", "0,0", "", "", "", "", "", "", "", ""],
-    "-90° LeJ": ["-1,0", "-1,0", "-1,0", "-1,0", "-0,9", "-0,6", "", "", "", "", "", "", "", ""],
-    "Ce médio H1": ["", "", "", "", "", "", "", "-2,0", "-2,0", "-1,8", "-1,8", "-1,8", "-1,8"],
-    "Ce médio H2": ["", "", "", "", "", "", "", "-1,5", "-1,5", "-0,9", "-0,8", "-0,7", "-0,5"],
-    "Ce médio L1": ["", "", "", "", "", "", "", "-2,0", "-2,0", "-1,8", "-1,8", "-0,9", "-0,5"],
-    "Ce médio L2": ["", "", "", "", "", "", "", "-1,5", "-1,5", "-1,4", "-1,4", "-0,9", "-0,5"],
-    "Ce médio H6": ["", "", "", "", "", "", "", "-2,0", "-2,0", "-2,0", "-2,0", "-2,0", "-2,0"]
-}
-st.table(data_ce)
-
-# Seção 14: Zonas de Pressão Externa
-st.markdown("## 14. Zonas de Pressão Externa")
-st.markdown("H: Alta sucção (b/2 a partir da borda de barlavento); L: Baixa sucção (de b/2 até a/2); I, J: Zonas laterais.")
-
-# Seção 15: Coeficientes de Pressão Externa (Ce) Selecionados
-st.markdown("## 15. Coeficientes de Pressão Externa (Ce) Selecionados")
-data_ce_selecionados = {
-    "Direção do Vento": ["0°/180° (Longitudinal)", "90°/270° (Transversal)"],
-    "Fechamento": ["-0,90,-0,46,-0,28,-0,42,0,70", "-0,90,-0,50,-0,54"],
-    "Cobertura": ["-0,90,-0,60,-0,33,0,70", "-0,93,-0,60,-0,54"]
-}
-st.table(data_ce_selecionados)
-
-# Seção 16: Coeficiente de Pressão Interno (Cpi)
-st.markdown("## 16. Coeficiente de Pressão Interno (Cpi)")
-st.markdown("Caso Selecionado (NBR 6123:2023 - Item 6.3.2.1): a  \nDescrição: a) Duas faces opostas igualmente permeáveis; as outras faces impermeáveis  \nCpi: 0,20, -0,30")
-
-# Seção 17: Pressão Efetiva (DP)
-st.markdown("## 17. Pressão Efetiva (DP)")
-st.markdown("### 17.1. Vento a 0°/180° - Fechamento")
-data_dp_1 = {
-    "Ce": ["-0,90", "-0,90", "-0,46", "-0,46", "-0,28", "-0,28", "-0,42", "-0,42", "0,70", "0,70"],
-    "Cpi": ["0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30"],
-    "DP (kgf/m²)": ["-186,46", "-101,70", "-112,30", "-27,54", "-81,70", "3,05", "-105,94", "-21,19", "84,75", "169,51"]
-}
-st.table(data_dp_1)
-
-st.markdown("### 17.2. Vento a 0°/180° - Cobertura")
-data_dp_2 = {
-    "Ce": ["-0,90", "-0,90", "-0,60", "-0,60", "-0,33", "-0,33", "0,70", "0,70"],
-    "Cpi": ["0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30"],
-    "DP (kgf/m²)": ["-187,80", "-102,44", "-136,58", "-51,22", "-89,63", "-4,27", "85,36", "170,73"]
-}
-st.table(data_dp_2)
-
-st.markdown("### 17.3. Vento a 90°/270° - Fechamento")
-data_dp_3 = {
-    "Ce": ["-0,90", "-0,90", "-0,50", "-0,50", "-0,54", "-0,54"],
-    "Cpi": ["0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30"],
-    "DP (kgf/m²)": ["-186,46", "-101,70", "-118,66", "-33,90", "-125,01", "-40,26"]
-}
-st.table(data_dp_3)
-
-st.markdown("### 17.4. Vento a 90°/270° - Cobertura")
-data_dp_4 = {
-    "Ce": ["-0,93", "-0,93", "-0,60", "-0,60", "-0,54", "-0,54"],
-    "Cpi": ["0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30"],
-    "DP (kgf/m²)": ["-192,65", "-107,28", "-136,58", "-51,22", "-125,91", "-40,55"]
-}
-st.table(data_dp_4)
-
-# Seção 18: Observações
-st.markdown("## 18. Observações")
-st.markdown("Os valores de DP são aplicáveis ao dimensionamento do sistema de vedação (fechamento e cobertura). Verificar a combinação mais crítica para cada elemento.  \nCálculos realizados conforme ABNT NBR 6123:2023.")
-
-# Seção 19: Legenda de Siglas
-st.markdown("## 19. Legenda de Siglas")
-data_legendas = {
-    "Sigla": ["z", "V0", "Vk", "q", "Ce", "Cpi", "S1", "S2", "S3", "Fr", "bm", "p", "DP"],
-    "Descrição": [
-        "Altura acima do terreno (m)",
-        "Velocidade básica do vento (m/s)",
-        "Velocidade característica do vento (m/s)",
-        "Pressão dinâmica do vento (kN/m² ou kgf/m²)",
-        "Coeficiente de forma externo",
-        "Coeficiente de pressão interna",
-        "Fator topográfico",
-        "Fator de rugosidade e dimensões da edificação",
-        "Fator estatístico",
-        "Fator de rajada",
-        "Fator meteorológico (NBR 6123:2023)",
-        "Expoente meteorológico (NBR 6123:2023)",
-        "Pressão efetiva (kgf/m²)"
-    ]
-}
-st.table(data_legendas)
+dados_edificacao["Tipo de Cobertura"] = st.text_input("Tipo de Cobertura", value="Duas Águas")
+dados_edificacao["Comprimento (a)"] = st.text_input("Comprimento (a)", value="48,00 m")
+dados_edificacao["Largura (b)"] = st.text_input("Largura (b)", value="16,00 m")
+dados_edificacao["Pé-Direito (h)"] = st.text_input("Pé-Direito (h)", value="10,90 m")
+dados_edificacao["Inclinação da Cobertura"] = st.text_input("Inclinação da Cobertura", value="10,00 % (5,71°)")
+dados_edificacao["Altura Média - Fechamento (z)"] = st.text_input("Altura Média - Fechamento (z)", value="13,00 m")
+dados_edificacao["Altura Média - Cobertura (z)"] = st.text_input("Altura Média - Cobertura (z)", value="13,80 m")
+dados_edificacao["Distância Entre Pórticos"] = st.text_input("Distância Entre Pórticos", value="5,00 m")
+dados_edificacao["Velocidade Básica do Vento (V0)"] = st.text_input("Velocidade Básica do Vento (V0)", value="42,00 m/s")
+dados_edificacao["Categoria de Rugosidade"] = st.text_input("Categoria de Rugosidade", value="I - I: Mar ou costa com poucos obstáculos")
+dados_edificacao["Classe"] = st.text_input("Classe", value="A")
+dados_edificacao["Fator Topográfico (S1)"] = st.text_input("Fator Topográfico (S1)", value="1,00")
+dados_edificacao["Fator Estatístico (S3)"] = st.text_input("Fator Estatístico (S3)", value="1,11 (Tp: 100 anos)")
 
 # Upload de Imagem
 uploaded_image = st.file_uploader("Insira uma imagem para incluir no relatório (opcional):", type=["jpg", "jpeg", "png"])
-if uploaded_image is not None:
-    st.image(uploaded_image, caption="Imagem Inserida pelo Usuário", use_column_width=True)
 
-# Botão para gerar PDF
-if st.button("Gerar Relatório em PDF"):
-    pdf = generate_pdf(uploaded_image)
+# Botão para gerar o relatório
+if st.button("Gerar Relatório"):
+    # Exibir o relatório na interface
+    st.markdown("## Relatório Gerado")
+
+    # Capa
+    st.markdown("""
+    # Relatório de Cálculo de Ações do Vento
+    **Conforme ABNT NBR 6123:2023**
+
+    | **Cliente** | Construtora ABC |
+    | **Obra** | Edifício Residencial |
+    | **Localização** | São Paulo, SP |
+    | **Cód. do Projeto** | 2025-001 |
+    | **Número do Documento** | REL-001-2025 |
+    | **Revisão** | 0 |
+    | **Data** | 29/04/2025 |
+    | **Cálculo** | João Silva |
+    | **Aprovação** | [A Definir] |
+    | **Empresa** | xAI Engenharia Ltda. |
+    | **Contato** | contato@xaiengenharia.com |
+    """)
+
+    # Sumário
+    st.markdown("""
+    ## Sumário
+
+    | Seção | Título | Página |
+    |-------|--------|--------|
+    | 1     | Dados da Edificação | 2 |
+    | 2     | Fator de Rajada (Fr) | 3 |
+    | 3     | Parâmetros Meteorológicos | 3 |
+    | 4     | Valores Mínimos do Fator Estatístico S3 | 4 |
+    | 5     | Cálculo do Fator S2 por Altura | 4 |
+    | 6     | Velocidades e Pressões Características | 5 |
+    | 7     | Parâmetros para Determinação do Fator S2 | 5 |
+    | 8     | Pressões de Vento na Direção X1 | 6 |
+    | 9     | Pressões de Vento na Direção X2 | 6 |
+    | 10    | Fator S2 Calculado | 7 |
+    | 11    | Velocidade Característica (Vk) | 7 |
+    | 12    | Pressão Dinâmica do Vento (q) | 7 |
+    | 13    | Coeficientes de Pressão Externa (Ce) | 8 |
+    | 14    | Zonas de Pressão Externa | 9 |
+    | 15    | Coeficientes de Pressão Externa (Ce) Selecionados | 9 |
+    | 16    | Coeficiente de Pressão Interno (Cpi) | 10 |
+    | 17    | Pressão Efetiva (DP) | 10 |
+    | 18    | Observações | 12 |
+    | 19    | Legenda de Siglas | 12 |
+    """)
+
+    # Metodologia de Cálculo (Fórmulas)
+    st.markdown("""
+    ## Metodologia de Cálculo
+    **Velocidade Característica do Vento (Vk):**  
+    \[
+    Vk = V0 \cdot S1 \cdot S2 \cdot S3
+    \]
+
+    **Fator S2:**  
+    \[
+    S2 = bm \cdot \left(\frac{z}{10}\right)^p \cdot Fr
+    \]
+
+    **Pressão Dinâmica do Vento (q):**  
+    \[
+    q = 0,613 \cdot Vk^2 \quad (\text{N/m}^2)
+    \]
+    \[
+    q = \frac{0,613 \cdot Vk^2}{9,81} \quad (\text{kgf/m}^2)
+    \]
+
+    **Pressão Efetiva (DP):**  
+    \[
+    DP = (Ce - Cpi) \cdot q
+    \]
+    """)
+
+    # Seção 1: Dados da Edificação
+    st.markdown("## 1. Dados da Edificação")
+    data_edificacao = {
+        "Parâmetro": dados_edificacao.keys(),
+        "Valor": dados_edificacao.values()
+    }
+    st.table(data_edificacao)
+
+    # Seção 2: Fator de Rajada (Fr)
+    st.markdown("## 2. Fator de Rajada (Fr)")
+    data_fr = {
+        "Fr": ["", "1,00", "0,98", "0,95"],
+        "Classes": ["", "A", "B", "C"]
+    }
+    st.table(data_fr)
+
+    # Seção 3: Parâmetros Meteorológicos
+    st.markdown("## 3. Parâmetros Meteorológicos")
+    data_meteorologicos = {
+        "Categoria": ["I", "", "II", "", "III", "", "IV", "", "V", ""],
+        "Zg (m)": ["250", "", "300", "", "350", "", "420", "", "500", ""],
+        "Parâmetro": ["bm", "p", "bm", "p", "bm", "p", "bm", "p", "bm", "p"],
+        "A": ["1,10", "0,06", "1,00", "0,085", "0,94", "0,10", "0,86", "0,12", "0,74", "0,15"],
+        "B": ["1,11", "0,065", "1,00", "0,09", "0,94", "0,105", "0,85", "0,125", "0,73", "0,16"],
+        "C": ["1,12", "0,07", "1,00", "0,10", "0,93", "0,115", "0,84", "0,135", "0,71", "0,175"]
+    }
+    st.table(data_meteorologicos)
+
+    # Seção 4: Valores Mínimos do Fator Estatístico S3
+    st.markdown("## 4. Valores Mínimos do Fator Estatístico S3")
+    data_s3 = {
+        "Grupo": ["1", "2", "3", "4", "5"],
+        "Descrição": [
+            "Estruturas cuja ruína total ou parcial pode afetar a segurança ou possibilidade de socorro a pessoas após uma tempestade destrutiva (hospitais, quartéis de bombeiros e de forças de segurança, edifícios de centros de controle, torres de comunicação etc.). Obras de infraestrutura crítica. Armazenamento de substâncias perigosas e/ou tóxicas e/ou explosivas. Vedações das edificações do grupo 1 (telhas, vidros, painéis de vedação).",
+            "Estruturas cuja ruína representa substancial risco à vida humana, particularmente pessoas em aglomerações, crianças e jovens, incluindo, mas não limitadamente a: edificações com capacidade de aglomeração de mais de 300 pessoas em um mesmo ambiente, como centros de convenções, ginásios, estádios etc.; creches com capacidade maior do que 150 pessoas; escolas com capacidade maior do que 250 pessoas. Vedações das edificações do grupo 2 (telhas, vidros, painéis de vedação).",
+            "Edificações para residências, hotéis, comércio, indústrias. Estruturas ou elementos estruturais desmontáveis com vistas a reutilização. Vedações das edificações do grupo 3 (telhas, vidros, painéis de vedação).",
+            "Edificações não destinadas à ocupação humana (depósitos, silos) e sem circulação de pessoas no entorno. Vedações das edificações do grupo 4 (telhas, vidros, painéis de vedação).",
+            "Edificações temporárias não reutilizáveis. Estruturas dos Grupos 1 a 4 durante a construção (fator aplicável em um prazo máximo de 2 anos). Vedações das edificações do grupo 5 (telhas, vidros, painéis de vedação).",
+        ],
+        "S3": ["1,11", "1,06", "1,00", "0,95", "0,83"],
+        "Tp (anos)": ["100", "75", "50", "37", "15"]
+    }
+    st.table(data_s3)
+
+    # Seção 5: Cálculo do Fator S2 por Altura
+    st.markdown("## 5. Cálculo do Fator S2 por Altura")
+    data_s2_altura = {
+        "z (m)": ["0,0", "5,0", "10,0", "15,0", "20,0", "25,0", "30,0", "35,0", "40,0", "45,0", "50,0", "55,0", "60,0", "65,0", "70,0", "75,0"],
+        "S2": ["0,000000", "1,055191", "1,100000", "1,127089", "1,146712", "1,162168", "1,174952", "1,185869", "1,195408", "1,203886", "1,211521", "1,218469", "1,224847", "1,230743", "1,236228", "1,241356"]
+    }
+    st.table(data_s2_altura)
+
+    # Seção 6: Velocidades e Pressões Características
+    st.markdown("## 6. Velocidades e Pressões Características")
+    data_velocidades = {
+        "z (m)": ["0,0", "5,0", "10,0", "15,0", "20,0", "25,0", "30,0", "35,0", "40,0", "45,0", "50,0", "55,0", "60,0", "65,0", "70,0", "75,0"],
+        "S1": ["1,00"] * 16,
+        "S2": ["0,00", "1,06", "1,10", "1,13", "1,15", "1,16", "1,17", "1,19", "1,20", "1,20", "1,21", "1,22", "1,22", "1,23", "1,24", "1,24"],
+        "S3": ["1,11"] * 16,
+        "Vk (m/s)": ["0,00", "49,19", "51,28", "52,54", "53,46", "54,18", "54,78", "55,29", "55,73", "56,13", "56,48", "56,81", "57,10", "57,38", "57,63", "57,87"],
+        "q (kN/m²)": ["0,000", "1,482", "1,611", "1,691", "1,750", "1,798", "1,838", "1,872", "1,902", "1,929", "1,954", "1,976", "1,997", "2,016", "2,034", "2,051"]
+    }
+    st.table(data_velocidades)
+
+    # Gráfico de Velocidade x Altura
+    df_velocidade = pd.DataFrame({
+        "Altura (z) [m]": [float(z.replace(",", ".")) for z in data_velocidades["z (m)"]],
+        "Velocidade Vk (m/s)": [float(vk.replace(",", ".")) for vk in data_velocidades["Vk (m/s)"]]
+    })
+    fig = px.line(df_velocidade, x="Altura (z) [m]", y="Velocidade Vk (m/s)", title="Velocidade Característica (Vk) em Função da Altura (z)")
+    st.plotly_chart(fig)
+
+    # Seção 7: Parâmetros para Determinação do Fator S2
+    st.markdown("## 7. Parâmetros para Determinação do Fator S2")
+    data_params_s2 = {
+        "Direção do Vento": ["X1", "X2"],
+        "Fator de Rajada (Fr)": ["0,95", "0,95"],
+        "Coeficiente bm": ["0,93", "0,93"],
+        "Coeficiente p": ["0,10", "0,10"]
+    }
+    st.table(data_params_s2)
+
+    # Seção 8: Pressões de Vento na Direção X1
+    st.markdown("## 8. Pressões de Vento na Direção X1")
+    data_pressoes_x1 = {
+        "Altura z (m)": ["5,0", "10,0", "15,0", "20,0", "25,0"],
+        "Fator S2": ["1,06", "1,10", "1,13", "1,15", "1,16"],
+        "S1": ["1,00"] * 5,
+        "S3": ["1,11"] * 5,
+        "Velocidade Vk (m/s)": ["49,19", "51,28", "52,54", "53,46", "54,18"],
+        "Pressão q (kN/m²)": ["1,482", "1,611", "1,691", "1,750", "1,798"]
+    }
+    st.table(data_pressoes_x1)
+
+    # Seção 9: Pressões de Vento na Direção X2
+    st.markdown("## 9. Pressões de Vento na Direção X2")
+    data_pressoes_x2 = {
+        "Altura z (m)": ["5,0", "10,0", "15,0", "20,0", "25,0"],
+        "Fator S2": ["1,06", "1,10", "1,13", "1,15", "1,16"],
+        "S1": ["1,00"] * 5,
+        "S3": ["1,11"] * 5,
+        "Velocidade Vk (m/s)": ["49,19", "51,28", "52,54", "53,46", "54,18"],
+        "Pressão q (kN/m²)": ["1,482", "1,611", "1,691", "1,750", "1,798"]
+    }
+    st.table(data_pressoes_x2)
+
+    # Seção 10: Fator S2 Calculado
+    st.markdown("## 10. Fator S2 Calculado")
+    data_s2_calculado = {
+        "Parâmetro": ["Altura z (m)", "bm", "p", "Fr", "S2"],
+        "Fechamento": ["13,00", "1,10", "0,060", "1,00", "1,117453"],
+        "Cobertura": ["13,80", "1,10", "0,060", "1,00", "1,121464"]
+    }
+    st.table(data_s2_calculado)
+
+    # Seção 11: Velocidade Característica (Vk)
+    st.markdown("## 11. Velocidade Característica (Vk)")
+    data_vk = {
+        "": ["Vk (m/s)"],
+        "Fechamento": ["52,10"],
+        "Cobertura": ["52,28"]
+    }
+    st.table(data_vk)
+
+    # Seção 12: Pressão Dinâmica do Vento (q)
+    st.markdown("## 12. Pressão Dinâmica do Vento (q)")
+    data_q = {
+        "": ["q (N/m²)", "q (kgf/m²)"],
+        "Fechamento": ["1662,30", "169,51"],
+        "Cobertura": ["1674,25", "170,73"]
+    }
+    st.table(data_q)
+
+    # Seção 13: Coeficientes de Pressão Externa (Ce)
+    st.markdown("## 13. Coeficientes de Pressão Externa (Ce)")
+    data_ce = {
+        "θ (°)": ["5", "10", "15", "20 Bump", "", "30", "", "θ (°)", "5", "10", "15", "20", "25", "30"],
+        "90° HeI": ["-1,0", "-1,0", "-0,9", "-0,8", "-0,7", "-0,5", "", "", "", "", "", "", "", ""],
+        "90° LeJ": ["-0,5", "-0,5", "-0,5", "", "-0,5", "-0,5", "", "", "", "", "", "", "", ""],
+        "45° H": ["-1,0", "-1,0", "-1,0", "", "-1,0", "-1,0", "", "", "", "", "", "", "", ""],
+        "45° L": ["-0,9", "-0,8", "-0,7", "", "-0,6", "-0,6", "", "", "", "", "", "", "", ""],
+        "0° HeLa": ["-1,0", "-1,0", "-1,0", "-0,5", "-0,8", "-0,8", "", "", "", "", "", "", "", ""],
+        "0° HeLa_2": ["-0,5", "-0,5", "-0,5", "-0,5", "-0,5", "-0,5", "", "", "", "", "", "", "", ""],
+        "-45° H": ["-0,9", "-0,8", "-0,6", "-0,5", "-0,3", "-0,1", "", "", "", "", "", "", "", ""],
+        "-45° L": ["-1,0", "-1,0", "-1,0", "-1,0", "-0,9", "-0,8", "", "", "", "", "", "", "", ""],
+        "-90° HeI": ["-0,5", "-0,4", "-0,3", "-0,2", "-0,1", "0,0", "", "", "", "", "", "", "", ""],
+        "-90° LeJ": ["-1,0", "-1,0", "-1,0", "-1,0", "-0,9", "-0,6", "", "", "", "", "", "", "", ""],
+        "Ce médio H1": ["", "", "", "", "", "", "", "-2,0", "-2,0", "-1,8", "-1,8", "-1,8", "-1,8"],
+        "Ce médio H2": ["", "", "", "", "", "", "", "-1,5", "-1,5", "-0,9", "-0,8", "-0,7", "-0,5"],
+        "Ce médio L1": ["", "", "", "", "", "", "", "-2,0", "-2,0", "-1,8", "-1,8", "-0,9", "-0,5"],
+        "Ce médio L2": ["", "", "", "", "", "", "", "-1,5", "-1,5", "-1,4", "-1,4", "-0,9", "-0,5"],
+        "Ce médio H6": ["", "", "", "", "", "", "", "-2,0", "-2,0", "-2,0", "-2,0", "-2,0", "-2,0"]
+    }
+    st.table(data_ce)
+
+    # Seção 14: Zonas de Pressão Externa
+    st.markdown("## 14. Zonas de Pressão Externa")
+    st.markdown("H: Alta sucção (b/2 a partir da borda de barlavento); L: Baixa sucção (de b/2 até a/2); I, J: Zonas laterais.")
+
+    # Seção 15: Coeficientes de Pressão Externa (Ce) Selecionados
+    st.markdown("## 15. Coeficientes de Pressão Externa (Ce) Selecionados")
+    data_ce_selecionados = {
+        "Direção do Vento": ["0°/180° (Longitudinal)", "90°/270° (Transversal)"],
+        "Fechamento": ["-0,90,-0,46,-0,28,-0,42,0,70", "-0,90,-0,50,-0,54"],
+        "Cobertura": ["-0,90,-0,60,-0,33,0,70", "-0,93,-0,60,-0,54"]
+    }
+    st.table(data_ce_selecionados)
+
+    # Seção 16: Coeficiente de Pressão Interno (Cpi)
+    st.markdown("## 16. Coeficiente de Pressão Interno (Cpi)")
+    st.markdown("Caso Selecionado (NBR 6123:2023 - Item 6.3.2.1): a  \nDescrição: a) Duas faces opostas igualmente permeáveis; as outras faces impermeáveis  \nCpi: 0,20, -0,30")
+
+    # Seção 17: Pressão Efetiva (DP)
+    st.markdown("## 17. Pressão Efetiva (DP)")
+    st.markdown("### 17.1. Vento a 0°/180° - Fechamento")
+    data_dp_1 = {
+        "Ce": ["-0,90", "-0,90", "-0,46", "-0,46", "-0,28", "-0,28", "-0,42", "-0,42", "0,70", "0,70"],
+        "Cpi": ["0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30"],
+        "DP (kgf/m²)": ["-186,46", "-101,70", "-112,30", "-27,54", "-81,70", "3,05", "-105,94", "-21,19", "84,75", "169,51"]
+    }
+    st.table(data_dp_1)
+
+    st.markdown("### 17.2. Vento a 0°/180° - Cobertura")
+    data_dp_2 = {
+        "Ce": ["-0,90", "-0,90", "-0,60", "-0,60", "-0,33", "-0,33", "0,70", "0,70"],
+        "Cpi": ["0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30"],
+        "DP (kgf/m²)": ["-187,80", "-102,44", "-136,58", "-51,22", "-89,63", "-4,27", "85,36", "170,73"]
+    }
+    st.table(data_dp_2)
+
+    st.markdown("### 17.3. Vento a 90°/270° - Fechamento")
+    data_dp_3 = {
+        "Ce": ["-0,90", "-0,90", "-0,50", "-0,50", "-0,54", "-0,54"],
+        "Cpi": ["0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30"],
+        "DP (kgf/m²)": ["-186,46", "-101,70", "-118,66", "-33,90", "-125,01", "-40,26"]
+    }
+    st.table(data_dp_3)
+
+    st.markdown("### 17.4. Vento a 90°/270° - Cobertura")
+    data_dp_4 = {
+        "Ce": ["-0,93", "-0,93", "-0,60", "-0,60", "-0,54", "-0,54"],
+        "Cpi": ["0,20", "-0,30", "0,20", "-0,30", "0,20", "-0,30"],
+        "DP (kgf/m²)": ["-192,65", "-107,28", "-136,58", "-51,22", "-125,91", "-40,55"]
+    }
+    st.table(data_dp_4)
+
+    # Seção 18: Observações
+    st.markdown("## 18. Observações")
+    st.markdown("Os valores de DP são aplicáveis ao dimensionamento do sistema de vedação (fechamento e cobertura). Verificar a combinação mais crítica para cada elemento.  \nCálculos realizados conforme ABNT NBR 6123:2023.")
+
+    # Seção 19: Legenda de Siglas
+    st.markdown("## 19. Legenda de Siglas")
+    data_legendas = {
+        "Sigla": ["z", "V0", "Vk", "q", "Ce", "Cpi", "S1", "S2", "S3", "Fr", "bm", "p", "DP"],
+        "Descrição": [
+            "Altura acima do terreno (m)",
+            "Velocidade básica do vento (m/s)",
+            "Velocidade característica do vento (m/s)",
+            "Pressão dinâmica do vento (kN/m² ou kgf/m²)",
+            "Coeficiente de forma externo",
+            "Coeficiente de pressão interna",
+            "Fator topográfico",
+            "Fator de rugosidade e dimensões da edificação",
+            "Fator estatístico",
+            "Fator de rajada",
+            "Fator meteorológico (NBR 6123:2023)",
+            "Expoente meteorológico (NBR 6123:2023)",
+            "Pressão efetiva (kgf/m²)"
+        ]
+    }
+    st.table(data_legendas)
+
+    # Exibir imagem, se fornecida
+    if uploaded_image is not None:
+        st.markdown("## Imagem Inserida pelo Usuário")
+        st.image(uploaded_image, caption="Imagem Inserida pelo Usuário", use_column_width=True)
+
+    # Gerar e disponibilizar o PDF
+    pdf = generate_pdf(dados_edificacao, uploaded_image)
     pdf_output = pdf.output(dest="S").encode("latin1")
     st.download_button("Baixar Relatório em PDF", pdf_output, file_name="relatorio_vento.pdf")
