@@ -67,7 +67,7 @@ def add_header_footer(canvas, doc):
     
     canvas.restoreState()
 
-# Função para gerar o PDF (versão simplificada com aparência melhorada)
+# Função para gerar o PDF (adicionando a tabela de Velocidades e Pressões Características)
 def generate_pdf(data, results, project_info, uploaded_image=None):
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -75,12 +75,12 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
         pagesize=A4,
         rightMargin=2*cm,
         leftMargin=2*cm,
-        topMargin=3*cm,  # Aumentado para acomodar o cabeçalho
-        bottomMargin=2*cm  # Aumentado para acomodar o rodapé
+        topMargin=3*cm,
+        bottomMargin=2*cm
     )
     story = []
 
-    # Estilos atualizados para aparência mais profissional
+    # Estilos atualizados
     heading_style = ParagraphStyle(
         name='Heading',
         fontName='Helvetica-Bold',
@@ -235,8 +235,44 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     story.append(vk_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 6: Pressão Dinâmica (q)
-    story.append(Paragraph("6. Pressão Dinâmica (q)", heading_style))
+    # Seção 6: Velocidades e Pressões Características (Tabela Adicionada)
+    story.append(Paragraph("6. Velocidades e Pressões Características", heading_style))
+    story.append(Paragraph("Tabela 1 – Velocidades e Pressões Características – NBR 6123:2023", table_title_style))
+    vp_data = [
+        ["z (m)", "S1", "S2", "S3", "Vk (m/s)", "q (kN/m²)"],
+        ["0,0", "1,00", "0,00", "1,11", "0,00", "0,000"],
+        ["5,0", "1,00", "1,06", "1,11", "49,19", "1,482"],
+        ["10,0", "1,00", "1,10", "1,11", "51,28", "1,611"],
+        ["15,0", "1,00", "1,13", "1,11", "52,54", "1,691"],
+        ["20,0", "1,00", "1,15", "1,11", "53,46", "1,750"],
+        ["25,0", "1,00", "1,16", "1,11", "54,18", "1,798"],
+        ["30,0", "1,00", "1,17", "1,11", "54,78", "1,838"],
+        ["35,0", "1,00", "1,19", "1,11", "55,29", "1,872"],
+        ["40,0", "1,00", "1,20", "1,11", "55,73", "1,902"],
+        ["45,0", "1,00", "1,20", "1,11", "56,13", "1,929"],
+        ["50,0", "1,00", "1,21", "1,11", "56,48", "1,954"],
+        ["55,0", "1,00", "1,22", "1,11", "56,81", "1,976"],
+        ["60,0", "1,00", "1,22", "1,11", "57,10", "1,997"],
+        ["65,0", "1,00", "1,23", "1,11", "57,38", "2,016"],
+        ["70,0", "1,00", "1,24", "1,11", "57,63", "2,034"],
+        ["75,0", "1,00", "1,24", "1,11", "57,87", "2,051"]
+    ]
+    vp_table = Table(vp_data, colWidths=[2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm])
+    vp_table.setStyle(TableStyle([
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,0), (-1,0), colors.lightblue),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
+    ]))
+    story.append(vp_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # Seção 7: Pressão Dinâmica (q)
+    story.append(Paragraph("7. Pressão Dinâmica (q)", heading_style))
     story.append(Paragraph("A pressão dinâmica é calculada pela fórmula: q = 0,613 * Vk²", body_style))
     q_data = [
         ["Fechamento", f"{format_with_comma(results['q_fechamento_nm2'])} N/m² ({format_with_comma(results['q_fechamento_kgfm2'])} kgf/m²)"],
@@ -256,8 +292,8 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     story.append(q_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 7: Coeficientes de Pressão Interna (Cpi)
-    story.append(Paragraph("7. Coeficientes de Pressão Interna (Cpi)", heading_style))
+    # Seção 8: Coeficientes de Pressão Interna (Cpi)
+    story.append(Paragraph("8. Coeficientes de Pressão Interna (Cpi)", heading_style))
     story.append(Paragraph(f"Caso Selecionado: {results['cpi_case_description']}", subheading_style))
     cpi_data = [[f"Cpi: {format_with_comma(val)}"] for val in results['cpi']]
     cpi_table = Table(cpi_data, colWidths=[5*cm])
@@ -273,8 +309,8 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     story.append(cpi_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 8: Pressão Efetiva (DP)
-    story.append(Paragraph("8. Pressão Efetiva (DP)", heading_style))
+    # Seção 9: Pressão Efetiva (DP)
+    story.append(Paragraph("9. Pressão Efetiva (DP)", heading_style))
     story.append(Paragraph("A pressão efetiva é calculada pela fórmula: DP = q * (Ce - Cpi)", body_style))
     for direction, dp_data in results['dp_results'].items():
         story.append(Paragraph(direction, subheading_style))
@@ -294,25 +330,25 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
         story.append(Spacer(1, 0.3*cm))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 9: Metodologia de Cálculo (Fórmulas)
-    story.append(Paragraph("9. Metodologia de Cálculo", heading_style))
+    # Seção 10: Metodologia de Cálculo (Fórmulas)
+    story.append(Paragraph("10. Metodologia de Cálculo", heading_style))
     story.append(Paragraph("Velocidade Característica do Vento (Vk): Vk = V0 * S1 * S2 * S3", body_style))
     story.append(Paragraph("Fator S2: S2 = bm * (z/10)^p * Fr", body_style))
     story.append(Paragraph("Pressão Dinâmica do Vento (q): q = 0,613 * Vk^2 (N/m²); q = (0,613 * Vk^2) / 9,81 (kgf/m²)", body_style))
     story.append(Paragraph("Pressão Efetiva (DP): DP = (Ce - Cpi) * q", body_style))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 10: Perfil de Velocidade do Vento
-    story.append(Paragraph("10. Perfil de Velocidade do Vento em Função da Altura", heading_style))
+    # Seção 11: Perfil de Velocidade do Vento
+    story.append(Paragraph("11. Perfil de Velocidade do Vento em Função da Altura", heading_style))
     z_values = np.linspace(0, max(data['z_fechamento'], data['z_cobertura']) * 1.5, 100)
     vk_values = [data['v0'] * data['s1'] * calculate_s2(z, data['v0'], data['category'], data['class_'])[0] * data['s3'] for z in z_values]
     velocity_img = create_velocity_height_graph(z_values, vk_values)
     story.append(Image(velocity_img, width=12*cm, height=8*cm))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 11: Imagem Inserida pelo Usuário (se houver)
+    # Seção 12: Imagem Inserida pelo Usuário (se houver)
     if uploaded_image is not None:
-        story.append(Paragraph("11. Imagem Inserida pelo Usuário", heading_style))
+        story.append(Paragraph("12. Imagem Inserida pelo Usuário", heading_style))
         image = PILImage.open(uploaded_image)
         img_buffer = BytesIO()
         image.save(img_buffer, format="PNG")
