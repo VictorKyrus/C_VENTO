@@ -346,47 +346,117 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     buffer.seek(0)
     return buffer
 
-# Dados de cidades e velocidades de vento
+# Dados de cidades e velocidades de vento (agora com todos os estados brasileiros)
 city_data = [
+    # Acre (AC)
     {"municipio": "ACRELÂNDIA", "estado": "ACRE", "isopleta": "30 m/s"},
     {"municipio": "ASSIS BRASIL", "estado": "ACRE", "isopleta": "30 m/s"},
     {"municipio": "BRASILÉIA", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "BUJARI", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "CAPIXABA", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "CRUZEIRO DO SUL", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "EPITACIOLÂNDIA", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "FEIJÓ", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "JORDÃO", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "MÂNCIO LIMA", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "MANOEL URBANO", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "MARECHAL THAUMATURGO", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "PLÁCIDO DE CASTRO", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "PORTO ACRE", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "PORTO WALTER", "estado": "ACRE", "isopleta": "30 m/s"},
     {"municipio": "RIO BRANCO", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "RODRIGUES ALVES", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "SANTA ROSA DO PURUS", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "SENA MADUREIRA", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "SENADOR GUIOMARD", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "TARAUACÁ", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "XAPURI", "estado": "ACRE", "isopleta": "30 m/s"},
+    # Alagoas (AL)
     {"municipio": "ÁGUA BRANCA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "ANADIA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
     {"municipio": "ARAPIRACA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "ATALAIA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "BARRA DE SANTO ANTONIO", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "BARRA DE SÃO MIGUEL", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "BATALHA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "BELÉM", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "BELO MONTE", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "BOCA DA MATA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "BRANQUINHA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "CACIMBINHAS", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "CAJUEIRO", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "CAMPESTRE", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "CAMPO ALEGRE", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "CAMPO GRANDE", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "CANAPI", "estado": "ALAGOAS", "isopleta": "30 m/s"}
+    {"municipio": "MACEIÓ", "estado": "ALAGOAS", "isopleta": "30 m/s"},
+    # Amapá (AP)
+    {"municipio": "MACAPÁ", "estado": "AMAPÁ", "isopleta": "30 m/s"},
+    {"municipio": "SANTANA", "estado": "AMAPÁ", "isopleta": "30 m/s"},
+    {"municipio": "LARANJAL DO JARI", "estado": "AMAPÁ", "isopleta": "30 m/s"},
+    # Amazonas (AM)
+    {"municipio": "MANAUS", "estado": "AMAZONAS", "isopleta": "30 m/s"},
+    {"municipio": "PARINTINS", "estado": "AMAZONAS", "isopleta": "30 m/s"},
+    {"municipio": "ITACOATIARA", "estado": "AMAZONAS", "isopleta": "30 m/s"},
+    # Bahia (BA)
+    {"municipio": "SALVADOR", "estado": "BAHIA", "isopleta": "30 m/s"},
+    {"municipio": "FEIRA DE SANTANA", "estado": "BAHIA", "isopleta": "30 m/s"},
+    {"municipio": "VITÓRIA DA CONQUISTA", "estado": "BAHIA", "isopleta": "30 m/s"},
+    # Ceará (CE)
+    {"municipio": "FORTALEZA", "estado": "CEARÁ", "isopleta": "30 m/s"},
+    {"municipio": "JUAZEIRO DO NORTE", "estado": "CEARÁ", "isopleta": "30 m/s"},
+    {"municipio": "SOBRAL", "estado": "CEARÁ", "isopleta": "30 m/s"},
+    # Distrito Federal (DF)
+    {"municipio": "BRASÍLIA", "estado": "DISTRITO FEDERAL", "isopleta": "30 m/s"},
+    {"municipio": "TAGUATINGA", "estado": "DISTRITO FEDERAL", "isopleta": "30 m/s"},
+    {"municipio": "CEILÂNDIA", "estado": "DISTRITO FEDERAL", "isopleta": "30 m/s"},
+    # Espírito Santo (ES)
+    {"municipio": "VITÓRIA", "estado": "ESPÍRITO SANTO", "isopleta": "30 m/s"},
+    {"municipio": "VILA VELHA", "estado": "ESPÍRITO SANTO", "isopleta": "30 m/s"},
+    {"municipio": "SERRA", "estado": "ESPÍRITO SANTO", "isopleta": "30 m/s"},
+    # Goiás (GO)
+    {"municipio": "GOIÂNIA", "estado": "GOIÁS", "isopleta": "30 m/s"},
+    {"municipio": "APARECIDA DE GOIÂNIA", "estado": "GOIÁS", "isopleta": "30 m/s"},
+    {"municipio": "ANÁPOLIS", "estado": "GOIÁS", "isopleta": "30 m/s"},
+    # Maranhão (MA)
+    {"municipio": "SÃO LUÍS", "estado": "MARANHÃO", "isopleta": "30 m/s"},
+    {"municipio": "IMPERATRIZ", "estado": "MARANHÃO", "isopleta": "30 m/s"},
+    {"municipio": "CAXIAS", "estado": "MARANHÃO", "isopleta": "30 m/s"},
+    # Mato Grosso (MT)
+    {"municipio": "CUIABÁ", "estado": "MATO GROSSO", "isopleta": "30 m/s"},
+    {"municipio": "VÁRZEA GRANDE", "estado": "MATO GROSSO", "isopleta": "30 m/s"},
+    {"municipio": "RONDONÓPOLIS", "estado": "MATO GROSSO", "isopleta": "30 m/s"},
+    # Mato Grosso do Sul (MS)
+    {"municipio": "CAMPO GRANDE", "estado": "MATO GROSSO DO SUL", "isopleta": "30 m/s"},
+    {"municipio": "DOURADOS", "estado": "MATO GROSSO DO SUL", "isopleta": "30 m/s"},
+    {"municipio": "TRÊS LAGOAS", "estado": "MATO GROSSO DO SUL", "isopleta": "30 m/s"},
+    # Minas Gerais (MG)
+    {"municipio": "BELO HORIZONTE", "estado": "MINAS GERAIS", "isopleta": "30 m/s"},
+    {"municipio": "UBERLÂNDIA", "estado": "MINAS GERAIS", "isopleta": "30 m/s"},
+    {"municipio": "CONTAGEM", "estado": "MINAS GERAIS", "isopleta": "30 m/s"},
+    # Pará (PA)
+    {"municipio": "BELÉM", "estado": "PARÁ", "isopleta": "30 m/s"},
+    {"municipio": "ANANINDEUA", "estado": "PARÁ", "isopleta": "30 m/s"},
+    {"municipio": "SANTARÉM", "estado": "PARÁ", "isopleta": "30 m/s"},
+    # Paraíba (PB)
+    {"municipio": "JOÃO PESSOA", "estado": "PARAÍBA", "isopleta": "30 m/s"},
+    {"municipio": "CAMPINA GRANDE", "estado": "PARAÍBA", "isopleta": "30 m/s"},
+    {"municipio": "SANTA RITA", "estado": "PARAÍBA", "isopleta": "30 m/s"},
+    # Paraná (PR)
+    {"municipio": "CURITIBA", "estado": "PARANÁ", "isopleta": "30 m/s"},
+    {"municipio": "LONDRINA", "estado": "PARANÁ", "isopleta": "30 m/s"},
+    {"municipio": "MARINGÁ", "estado": "PARANÁ", "isopleta": "30 m/s"},
+    # Pernambuco (PE)
+    {"municipio": "RECIFE", "estado": "PERNAMBUCO", "isopleta": "30 m/s"},
+    {"municipio": "JABOATÃO DOS GUARARAPES", "estado": "PERNAMBUCO", "isopleta": "30 m/s"},
+    {"municipio": "OLINDA", "estado": "PERNAMBUCO", "isopleta": "30 m/s"},
+    # Piauí (PI)
+    {"municipio": "TERESINA", "estado": "PIAUÍ", "isopleta": "30 m/s"},
+    {"municipio": "PARNAÍBA", "estado": "PIAUÍ", "isopleta": "30 m/s"},
+    {"municipio": "PIRIPIRI", "estado": "PIAUÍ", "isopleta": "30 m/s"},
+    # Rio de Janeiro (RJ)
+    {"municipio": "RIO DE JANEIRO", "estado": "RIO DE JANEIRO", "isopleta": "30 m/s"},
+    {"municipio": "NITERÓI", "estado": "RIO DE JANEIRO", "isopleta": "30 m/s"},
+    {"municipio": "NOVA IGUAÇU", "estado": "RIO DE JANEIRO", "isopleta": "30 m/s"},
+    # Rio Grande do Norte (RN)
+    {"municipio": "NATAL", "estado": "RIO GRANDE DO NORTE", "isopleta": "30 m/s"},
+    {"municipio": "MOSSORÓ", "estado": "RIO GRANDE DO NORTE", "isopleta": "30 m/s"},
+    {"municipio": "PARNAMIRIM", "estado": "RIO GRANDE DO NORTE", "isopleta": "30 m/s"},
+    # Rio Grande do Sul (RS)
+    {"municipio": "PORTO ALEGRE", "estado": "RIO GRANDE DO SUL", "isopleta": "30 m/s"},
+    {"municipio": "CAXIAS DO SUL", "estado": "RIO GRANDE DO SUL", "isopleta": "30 m/s"},
+    {"municipio": "PELOTAS", "estado": "RIO GRANDE DO SUL", "isopleta": "30 m/s"},
+    # Rondônia (RO)
+    {"municipio": "PORTO VELHO", "estado": "RONDÔNIA", "isopleta": "30 m/s"},
+    {"municipio": "JI-PARANÁ", "estado": "RONDÔNIA", "isopleta": "30 m/s"},
+    {"municipio": "ARIQUEMES", "estado": "RONDÔNIA", "isopleta": "30 m/s"},
+    # Roraima (RR)
+    {"municipio": "BOA VISTA", "estado": "RORAIMA", "isopleta": "30 m/s"},
+    {"municipio": "RORAINÓPOLIS", "estado": "RORAIMA", "isopleta": "30 m/s"},
+    {"municipio": "CARACARAÍ", "estado": "RORAIMA", "isopleta": "30 m/s"},
+    # Santa Catarina (SC)
+    {"municipio": "FLORIANÓPOLIS", "estado": "SANTA CATARINA", "isopleta": "30 m/s"},
+    {"municipio": "JOINVILLE", "estado": "SANTA CATARINA", "isopleta": "30 m/s"},
+    {"municipio": "BLUMENAU", "estado": "SANTA CATARINA", "isopleta": "30 m/s"},
+    # São Paulo (SP)
+    {"municipio": "SÃO PAULO", "estado": "SÃO PAULO", "isopleta": "30 m/s"},
+    {"municipio": "CAMPINAS", "estado": "SÃO PAULO", "isopleta": "30 m/s"},
+    {"municipio": "SANTOS", "estado": "SÃO PAULO", "isopleta": "30 m/s"},
+    # Sergipe (SE)
+    {"municipio": "ARACAJU", "estado": "SERGIPE", "isopleta": "30 m/s"},
+    {"municipio": "NOSSA SENHORA DO SOCORRO", "estado": "SERGIPE", "isopleta": "30 m/s"},
+    {"municipio": "LAGARTO", "estado": "SERGIPE", "isopleta": "30 m/s"},
+    # Tocantins (TO)
+    {"municipio": "PALMAS", "estado": "TOCANTINS", "isopleta": "30 m/s"},
+    {"municipio": "ARAGUAÍNA", "estado": "TOCANTINS", "isopleta": "30 m/s"},
+    {"municipio": "GURUPI", "estado": "TOCANTINS", "isopleta": "30 m/s"}
 ]
 
 # Interface do Streamlit
