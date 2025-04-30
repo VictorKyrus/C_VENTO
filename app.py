@@ -14,10 +14,10 @@ from reportlab.lib.utils import ImageReader
 from datetime import datetime
 
 # Funções auxiliares
-def format_with_comma(value):
-    return f"{value:.3f}".replace('.', ',')
+def format_with_comma(value, decimals=2):
+    return f"{value:.{decimals}f}".replace('.', ',')
 
-# Função para calcular S2 (simplificada para o exemplo)
+# Função para calcular S2
 def calculate_s2(z, v0, category, class_):
     bm_dict = {"I": 1.0, "II": 0.9, "III": 0.8, "IV": 0.7, "V": 0.6}
     p_dict = {"I": 0.14, "II": 0.18, "III": 0.22, "IV": 0.28, "V": 0.35}
@@ -27,7 +27,7 @@ def calculate_s2(z, v0, category, class_):
     p = p_dict[category]
     fr = fr_dict[class_]
     
-    s2 = bm * (z / 10) ** p * fr
+    s2 = bm * (z / 10) ** p * fr if z > 0 else 0  # S2 é 0 para z = 0
     return s2, bm, p, fr
 
 # Função para criar gráfico de velocidade do vento em função da altura
@@ -67,7 +67,7 @@ def add_header_footer(canvas, doc):
     
     canvas.restoreState()
 
-# Função para gerar o PDF (adicionando a tabela de Velocidades e Pressões Características)
+# Função para gerar o PDF (com tabela de Velocidades e Pressões Características dinâmica)
 def generate_pdf(data, results, project_info, uploaded_image=None):
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -235,28 +235,30 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     story.append(vk_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 6: Velocidades e Pressões Características (Tabela Adicionada)
+    # Seção 6: Velocidades e Pressões Características (Tabela Dinâmica)
     story.append(Paragraph("6. Velocidades e Pressões Características", heading_style))
     story.append(Paragraph("Tabela 1 – Velocidades e Pressões Características – NBR 6123:2023", table_title_style))
-    vp_data = [
-        ["z (m)", "S1", "S2", "S3", "Vk (m/s)", "q (kN/m²)"],
-        ["0,0", "1,00", "0,00", "1,11", "0,00", "0,000"],
-        ["5,0", "1,00", "1,06", "1,11", "49,19", "1,482"],
-        ["10,0", "1,00", "1,10", "1,11", "51,28", "1,611"],
-        ["15,0", "1,00", "1,13", "1,11", "52,54", "1,691"],
-        ["20,0", "1,00", "1,15", "1,11", "53,46", "1,750"],
-        ["25,0", "1,00", "1,16", "1,11", "54,18", "1,798"],
-        ["30,0", "1,00", "1,17", "1,11", "54,78", "1,838"],
-        ["35,0", "1,00", "1,19", "1,11", "55,29", "1,872"],
-        ["40,0", "1,00", "1,20", "1,11", "55,73", "1,902"],
-        ["45,0", "1,00", "1,20", "1,11", "56,13", "1,929"],
-        ["50,0", "1,00", "1,21", "1,11", "56,48", "1,954"],
-        ["55,0", "1,00", "1,22", "1,11", "56,81", "1,976"],
-        ["60,0", "1,00", "1,22", "1,11", "57,10", "1,997"],
-        ["65,0", "1,00", "1,23", "1,11", "57,38", "2,016"],
-        ["70,0", "1,00", "1,24", "1,11", "57,63", "2,034"],
-        ["75,0", "1,00", "1,24", "1,11", "57,87", "2,051"]
-    ]
+    
+    # Gerar valores de z de 0 a 75 com incremento de 5
+    z_values = np.arange(0, 76, 5)
+    vp_data = [["z (m)", "S1", "S2", "S3", "Vk (m/s)", "q (kN/m²)"]]
+    
+    for z in z_values:
+        s1 = data['s1']
+        s2, _, _, _ = calculate_s2(z, data['v0'], data['category'], data['class_'])
+        s3 = data['s3']
+        vk = data['v0'] * s1 * s2 * s3
+        q = 0.613 * vk**2 / 1000  # Convertendo de N/m² para kN/m²
+        
+        vp_data.append([
+            format_with_comma(z, 1),
+            format_with_comma(s1, 2),
+            format_with_comma(s2, 2),
+            format_with_comma(s3, 2),
+            format_with_comma(vk, 2),
+            format_with_comma(q, 3)
+        ])
+    
     vp_table = Table(vp_data, colWidths=[2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm])
     vp_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
