@@ -373,8 +373,12 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
 
 # Carregar dados de cidades e velocidades de vento do CSV no GitHub
 csv_url = "https://raw.githubusercontent.com/VictorKyrus/C_VENTO/main/lista_de_isopletas_por_regi%C3%A3o_elgin.csv"
-df = pd.read_csv(csv_url, sep=';')
-city_data = df.to_dict('records')
+try:
+    df = pd.read_csv(csv_url, sep=';', encoding='utf-8', on_bad_lines='skip')
+    city_data = df.to_dict('records')
+except Exception as e:
+    st.error("Erro ao carregar o arquivo CSV. Verifique a URL ou o formato do arquivo.")
+    city_data = []
 
 # Interface do Streamlit
 st.markdown("""
@@ -454,9 +458,9 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # Card: Seleção de Cidade e Estado para Velocidade do Vento
 st.markdown('<div class="card"><div class="card-title">Seleção de Localização para Velocidade do Vento</div>', unsafe_allow_html=True)
-states = sorted(list(set(city["ESTADO"] for city in city_data)))
+states = sorted(list(set(city["ESTADO"] for city in city_data if city["ESTADO"] is not None)))
 state = st.selectbox("Selecione o Estado", [""] + states)
-cities = sorted([city["MUNICÍPIO"] for city in city_data if city["ESTADO"] == state]) if state else []
+cities = sorted([city["MUNICÍPIO"] for city in city_data if city["ESTADO"] == state and city["MUNICÍPIO"] is not None]) if state else []
 city = st.selectbox("Selecione a Cidade", [""] + cities)
 wind_speed = next((float(city["ISOPLETA"].split()[0]) for city in city_data if city["MUNICÍPIO"] == city and city["ESTADO"] == state), 42.0)
 st.write(f"Velocidade Básica do Vento (V0): {wind_speed} m/s")
