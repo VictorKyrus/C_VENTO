@@ -12,6 +12,7 @@ from PIL import Image as PILImage
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from datetime import datetime
+import math
 
 # Funções auxiliares
 def format_with_comma(value, decimals=2):
@@ -63,7 +64,7 @@ def add_header_footer(canvas, doc):
     canvas.restoreState()
 
 # Função para gerar o PDF
-def generate_pdf(data, results, project_info, uploaded_image=None):
+def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -316,25 +317,49 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
         story.append(Spacer(1, 0.3*cm))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 10: Metodologia de Cálculo
-    story.append(Paragraph("10. Metodologia de Cálculo", heading_style))
+    # Seção 10: Forças de Vento na Cobertura de Duas Águas
+    if data['roof_type'] == "Duas Águas":
+        story.append(Paragraph("10. Forças de Vento na Cobertura de Duas Águas", heading_style))
+        story.append(Paragraph("As forças são calculadas pela fórmula: F = DP * A, onde A é a área de cada água.", body_style))
+        for direction, force_data in wind_forces.items():
+            story.append(Paragraph(direction, subheading_style))
+            force_table_data = [["Ce", "Cpi", "DP (kgf/m²)", "Área (m²)", "F (kgf)"]] + force_data
+            force_table = Table(force_table_data, colWidths=[2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm])
+            force_table.setStyle(TableStyle([
+                ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+                ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+                ('FONTSIZE', (0,0), (-1,-1), 8),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('BACKGROUND', (0,0), (-1,0), colors.lightblue),
+                ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+                ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
+            ]))
+            story.append(force_table)
+            story.append(Spacer(1, 0.3*cm))
+        story.append(Spacer(1, 0.5*cm))
+
+    # Seção 11: Metodologia de Cálculo
+    story.append(Paragraph("11. Metodologia de Cálculo", heading_style))
     story.append(Paragraph("Velocidade Característica do Vento (Vk): Vk = V0 * S1 * S2 * S3", body_style))
     story.append(Paragraph("Fator S2: S2 = bm * (z/10)^p * Fr", body_style))
     story.append(Paragraph("Pressão Dinâmica do Vento (q): q = 0,613 * Vk^2 (N/m²); q = (0,613 * Vk^2) / 9,81 (kgf/m²)", body_style))
     story.append(Paragraph("Pressão Efetiva (DP): DP = (Ce - Cpi) * q", body_style))
+    if data['roof_type'] == "Duas Águas":
+        story.append(Paragraph("Força do Vento (F): F = DP * A", body_style))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 11: Perfil de Velocidade do Vento
-    story.append(Paragraph("11. Perfil de Velocidade do Vento em Função da Altura", heading_style))
+    # Seção 12: Perfil de Velocidade do Vento
+    story.append(Paragraph("12. Perfil de Velocidade do Vento em Função da Altura", heading_style))
     z_values = np.linspace(0, max(data['z_fechamento'], data['z_cobertura']) * 1.5, 100)
     vk_values = [data['v0'] * data['s1'] * calculate_s2(z, data['v0'], data['category'], data['class_'])[0] * data['s3'] for z in z_values]
     velocity_img = create_velocity_height_graph(z_values, vk_values)
     story.append(Image(velocity_img, width=12*cm, height=8*cm))
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 12: Imagem Inserida pelo Usuário
+    # Seção 13: Imagem Inserida pelo Usuário
     if uploaded_image is not None:
-        story.append(Paragraph("12. Imagem Inserida pelo Usuário", heading_style))
+        story.append(Paragraph("13. Imagem Inserida pelo Usuário", heading_style))
         image = PILImage.open(uploaded_image)
         img_buffer = BytesIO()
         image.save(img_buffer, format="PNG")
@@ -346,118 +371,10 @@ def generate_pdf(data, results, project_info, uploaded_image=None):
     buffer.seek(0)
     return buffer
 
-# Dados de cidades e velocidades de vento (agora com todos os estados brasileiros)
-city_data = [
-    # Acre (AC)
-    {"municipio": "ACRELÂNDIA", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "ASSIS BRASIL", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "BRASILÉIA", "estado": "ACRE", "isopleta": "30 m/s"},
-    {"municipio": "RIO BRANCO", "estado": "ACRE", "isopleta": "30 m/s"},
-    # Alagoas (AL)
-    {"municipio": "ÁGUA BRANCA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "ARAPIRACA", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    {"municipio": "MACEIÓ", "estado": "ALAGOAS", "isopleta": "30 m/s"},
-    # Amapá (AP)
-    {"municipio": "MACAPÁ", "estado": "AMAPÁ", "isopleta": "30 m/s"},
-    {"municipio": "SANTANA", "estado": "AMAPÁ", "isopleta": "30 m/s"},
-    {"municipio": "LARANJAL DO JARI", "estado": "AMAPÁ", "isopleta": "30 m/s"},
-    # Amazonas (AM)
-    {"municipio": "MANAUS", "estado": "AMAZONAS", "isopleta": "30 m/s"},
-    {"municipio": "PARINTINS", "estado": "AMAZONAS", "isopleta": "30 m/s"},
-    {"municipio": "ITACOATIARA", "estado": "AMAZONAS", "isopleta": "30 m/s"},
-    # Bahia (BA)
-    {"municipio": "SALVADOR", "estado": "BAHIA", "isopleta": "30 m/s"},
-    {"municipio": "FEIRA DE SANTANA", "estado": "BAHIA", "isopleta": "30 m/s"},
-    {"municipio": "VITÓRIA DA CONQUISTA", "estado": "BAHIA", "isopleta": "30 m/s"},
-    # Ceará (CE)
-    {"municipio": "FORTALEZA", "estado": "CEARÁ", "isopleta": "30 m/s"},
-    {"municipio": "JUAZEIRO DO NORTE", "estado": "CEARÁ", "isopleta": "30 m/s"},
-    {"municipio": "SOBRAL", "estado": "CEARÁ", "isopleta": "30 m/s"},
-    # Distrito Federal (DF)
-    {"municipio": "BRASÍLIA", "estado": "DISTRITO FEDERAL", "isopleta": "30 m/s"},
-    {"municipio": "TAGUATINGA", "estado": "DISTRITO FEDERAL", "isopleta": "30 m/s"},
-    {"municipio": "CEILÂNDIA", "estado": "DISTRITO FEDERAL", "isopleta": "30 m/s"},
-    # Espírito Santo (ES)
-    {"municipio": "VITÓRIA", "estado": "ESPÍRITO SANTO", "isopleta": "30 m/s"},
-    {"municipio": "VILA VELHA", "estado": "ESPÍRITO SANTO", "isopleta": "30 m/s"},
-    {"municipio": "SERRA", "estado": "ESPÍRITO SANTO", "isopleta": "30 m/s"},
-    # Goiás (GO)
-    {"municipio": "GOIÂNIA", "estado": "GOIÁS", "isopleta": "30 m/s"},
-    {"municipio": "APARECIDA DE GOIÂNIA", "estado": "GOIÁS", "isopleta": "30 m/s"},
-    {"municipio": "ANÁPOLIS", "estado": "GOIÁS", "isopleta": "30 m/s"},
-    # Maranhão (MA)
-    {"municipio": "SÃO LUÍS", "estado": "MARANHÃO", "isopleta": "30 m/s"},
-    {"municipio": "IMPERATRIZ", "estado": "MARANHÃO", "isopleta": "30 m/s"},
-    {"municipio": "CAXIAS", "estado": "MARANHÃO", "isopleta": "30 m/s"},
-    # Mato Grosso (MT)
-    {"municipio": "CUIABÁ", "estado": "MATO GROSSO", "isopleta": "30 m/s"},
-    {"municipio": "VÁRZEA GRANDE", "estado": "MATO GROSSO", "isopleta": "30 m/s"},
-    {"municipio": "RONDONÓPOLIS", "estado": "MATO GROSSO", "isopleta": "30 m/s"},
-    # Mato Grosso do Sul (MS)
-    {"municipio": "CAMPO GRANDE", "estado": "MATO GROSSO DO SUL", "isopleta": "30 m/s"},
-    {"municipio": "DOURADOS", "estado": "MATO GROSSO DO SUL", "isopleta": "30 m/s"},
-    {"municipio": "TRÊS LAGOAS", "estado": "MATO GROSSO DO SUL", "isopleta": "30 m/s"},
-    # Minas Gerais (MG)
-    {"municipio": "BELO HORIZONTE", "estado": "MINAS GERAIS", "isopleta": "30 m/s"},
-    {"municipio": "UBERLÂNDIA", "estado": "MINAS GERAIS", "isopleta": "30 m/s"},
-    {"municipio": "CONTAGEM", "estado": "MINAS GERAIS", "isopleta": "30 m/s"},
-    # Pará (PA)
-    {"municipio": "BELÉM", "estado": "PARÁ", "isopleta": "30 m/s"},
-    {"municipio": "ANANINDEUA", "estado": "PARÁ", "isopleta": "30 m/s"},
-    {"municipio": "SANTARÉM", "estado": "PARÁ", "isopleta": "30 m/s"},
-    # Paraíba (PB)
-    {"municipio": "JOÃO PESSOA", "estado": "PARAÍBA", "isopleta": "30 m/s"},
-    {"municipio": "CAMPINA GRANDE", "estado": "PARAÍBA", "isopleta": "30 m/s"},
-    {"municipio": "SANTA RITA", "estado": "PARAÍBA", "isopleta": "30 m/s"},
-    # Paraná (PR)
-    {"municipio": "CURITIBA", "estado": "PARANÁ", "isopleta": "30 m/s"},
-    {"municipio": "LONDRINA", "estado": "PARANÁ", "isopleta": "30 m/s"},
-    {"municipio": "MARINGÁ", "estado": "PARANÁ", "isopleta": "30 m/s"},
-    # Pernambuco (PE)
-    {"municipio": "RECIFE", "estado": "PERNAMBUCO", "isopleta": "30 m/s"},
-    {"municipio": "JABOATÃO DOS GUARARAPES", "estado": "PERNAMBUCO", "isopleta": "30 m/s"},
-    {"municipio": "OLINDA", "estado": "PERNAMBUCO", "isopleta": "30 m/s"},
-    # Piauí (PI)
-    {"municipio": "TERESINA", "estado": "PIAUÍ", "isopleta": "30 m/s"},
-    {"municipio": "PARNAÍBA", "estado": "PIAUÍ", "isopleta": "30 m/s"},
-    {"municipio": "PIRIPIRI", "estado": "PIAUÍ", "isopleta": "30 m/s"},
-    # Rio de Janeiro (RJ)
-    {"municipio": "RIO DE JANEIRO", "estado": "RIO DE JANEIRO", "isopleta": "30 m/s"},
-    {"municipio": "NITERÓI", "estado": "RIO DE JANEIRO", "isopleta": "30 m/s"},
-    {"municipio": "NOVA IGUAÇU", "estado": "RIO DE JANEIRO", "isopleta": "30 m/s"},
-    # Rio Grande do Norte (RN)
-    {"municipio": "NATAL", "estado": "RIO GRANDE DO NORTE", "isopleta": "30 m/s"},
-    {"municipio": "MOSSORÓ", "estado": "RIO GRANDE DO NORTE", "isopleta": "30 m/s"},
-    {"municipio": "PARNAMIRIM", "estado": "RIO GRANDE DO NORTE", "isopleta": "30 m/s"},
-    # Rio Grande do Sul (RS)
-    {"municipio": "PORTO ALEGRE", "estado": "RIO GRANDE DO SUL", "isopleta": "30 m/s"},
-    {"municipio": "CAXIAS DO SUL", "estado": "RIO GRANDE DO SUL", "isopleta": "30 m/s"},
-    {"municipio": "PELOTAS", "estado": "RIO GRANDE DO SUL", "isopleta": "30 m/s"},
-    # Rondônia (RO)
-    {"municipio": "PORTO VELHO", "estado": "RONDÔNIA", "isopleta": "30 m/s"},
-    {"municipio": "JI-PARANÁ", "estado": "RONDÔNIA", "isopleta": "30 m/s"},
-    {"municipio": "ARIQUEMES", "estado": "RONDÔNIA", "isopleta": "30 m/s"},
-    # Roraima (RR)
-    {"municipio": "BOA VISTA", "estado": "RORAIMA", "isopleta": "30 m/s"},
-    {"municipio": "RORAINÓPOLIS", "estado": "RORAIMA", "isopleta": "30 m/s"},
-    {"municipio": "CARACARAÍ", "estado": "RORAIMA", "isopleta": "30 m/s"},
-    # Santa Catarina (SC)
-    {"municipio": "FLORIANÓPOLIS", "estado": "SANTA CATARINA", "isopleta": "30 m/s"},
-    {"municipio": "JOINVILLE", "estado": "SANTA CATARINA", "isopleta": "30 m/s"},
-    {"municipio": "BLUMENAU", "estado": "SANTA CATARINA", "isopleta": "30 m/s"},
-    # São Paulo (SP)
-    {"municipio": "SÃO PAULO", "estado": "SÃO PAULO", "isopleta": "30 m/s"},
-    {"municipio": "CAMPINAS", "estado": "SÃO PAULO", "isopleta": "30 m/s"},
-    {"municipio": "SANTOS", "estado": "SÃO PAULO", "isopleta": "30 m/s"},
-    # Sergipe (SE)
-    {"municipio": "ARACAJU", "estado": "SERGIPE", "isopleta": "30 m/s"},
-    {"municipio": "NOSSA SENHORA DO SOCORRO", "estado": "SERGIPE", "isopleta": "30 m/s"},
-    {"municipio": "LAGARTO", "estado": "SERGIPE", "isopleta": "30 m/s"},
-    # Tocantins (TO)
-    {"municipio": "PALMAS", "estado": "TOCANTINS", "isopleta": "30 m/s"},
-    {"municipio": "ARAGUAÍNA", "estado": "TOCANTINS", "isopleta": "30 m/s"},
-    {"municipio": "GURUPI", "estado": "TOCANTINS", "isopleta": "30 m/s"}
-]
+# Carregar dados de cidades e velocidades de vento do CSV no GitHub
+csv_url = "https://raw.githubusercontent.com/VictorKyrus/C_VENTO/main/lista_de_isopletas_por_regi%C3%A3o_elgin.csv"
+df = pd.read_csv(csv_url, sep=';')
+city_data = df.to_dict('records')
 
 # Interface do Streamlit
 st.markdown("""
@@ -537,11 +454,11 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # Card: Seleção de Cidade e Estado para Velocidade do Vento
 st.markdown('<div class="card"><div class="card-title">Seleção de Localização para Velocidade do Vento</div>', unsafe_allow_html=True)
-states = sorted(list(set(city["estado"] for city in city_data)))
+states = sorted(list(set(city["ESTADO"] for city in city_data)))
 state = st.selectbox("Selecione o Estado", [""] + states)
-cities = sorted([city["municipio"] for city in city_data if city["estado"] == state]) if state else []
+cities = sorted([city["MUNICÍPIO"] for city in city_data if city["ESTADO"] == state]) if state else []
 city = st.selectbox("Selecione a Cidade", [""] + cities)
-wind_speed = next((float(city["isopleta"].split()[0]) for city in city_data if city["municipio"] == city and city["estado"] == state), 42.0)
+wind_speed = next((float(city["ISOPLETA"].split()[0]) for city in city_data if city["MUNICÍPIO"] == city and city["ESTADO"] == state), 42.0)
 st.write(f"Velocidade Básica do Vento (V0): {wind_speed} m/s")
 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -640,13 +557,42 @@ q_fechamento_kgfm2 = q_fechamento_nm2 / 9.81
 q_cobertura_kgfm2 = q_cobertura_nm2 / 9.81
 
 dp_results = {}
+wind_forces = {}
+if roof_type == "Duas Águas":
+    # Calcular o ângulo de inclinação (theta) a partir do percentual de inclinação
+    theta = math.atan(slope / 100)  # slope em % convertido para radianos
+    # Calcular a área de cada água
+    width_inclined = (width / 2) / math.cos(theta)  # Largura inclinada de cada água
+    area_per_water = length * width_inclined  # Área de cada água (barlavento e sotavento)
+
+    for direction, ce_values in [
+        ("Cobertura (0°/180°)", ce_cobertura_0),
+        ("Cobertura (90°/270°)", ce_cobertura_90)
+    ]:
+        q = q_cobertura_kgfm2  # Pressão dinâmica em kgf/m²
+        dp_data = []
+        force_data = []
+        for ce in ce_values:
+            for cp in cpi:
+                dp = q * (ce - cp)  # DP em kgf/m²
+                force = dp * area_per_water  # Força em kgf
+                dp_data.append([format_with_comma(ce), format_with_comma(cp), format_with_comma(dp)])
+                force_data.append([
+                    format_with_comma(ce),
+                    format_with_comma(cp),
+                    format_with_comma(dp),
+                    format_with_comma(area_per_water, 2),
+                    format_with_comma(force, 2)
+                ])
+        dp_results[direction] = dp_data
+        wind_forces[direction] = force_data
+
+# Adicionar as pressões efetivas para o fechamento (que não têm forças calculadas aqui)
 for direction, ce_values in [
     ("Fechamento (0°/180°)", ce_fechamento_0),
     ("Fechamento (90°/270°)", ce_fechamento_90),
-    ("Cobertura (0°/180°)", ce_cobertura_0),
-    ("Cobertura (90°/270°)", ce_cobertura_90)
 ]:
-    q = q_fechamento_kgfm2 if "Fechamento" in direction else q_cobertura_kgfm2
+    q = q_fechamento_kgfm2
     dp_data = []
     for ce in ce_values:
         for cp in cpi:
@@ -668,6 +614,16 @@ for direction, dp_data in dp_results.items():
     st.write(f"{direction}")
     dp_df = pd.DataFrame(dp_data, columns=["Ce", "Cpi", "DP (kgf/m²)"])
     st.dataframe(dp_df)
+
+# Exibir as forças de vento na cobertura de duas águas
+if roof_type == "Duas Águas":
+    st.subheader("Forças de Vento na Cobertura de Duas Águas")
+    st.write(f"Área de cada água: {format_with_comma(area_per_water, 2)} m²")
+    for direction, force_data in wind_forces.items():
+        st.write(f"{direction}")
+        force_df = pd.DataFrame(force_data, columns=["Ce", "Cpi", "DP (kgf/m²)", "Área (m²)", "F (kgf)"])
+        st.dataframe(force_df)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Card: Upload de Imagem
@@ -719,7 +675,7 @@ results = {
 # Botão para gerar o relatório
 st.markdown("<div style='text-align: center; margin-top: 20px;'>", unsafe_allow_html=True)
 if st.button("Gerar Relatório PDF"):
-    pdf_buffer = generate_pdf(data, results, project_info, uploaded_image)
+    pdf_buffer = generate_pdf(data, results, project_info, wind_forces, uploaded_image)
     st.download_button(
         label="Baixar Relatório PDF",
         data=pdf_buffer,
