@@ -371,14 +371,14 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
     buffer.seek(0)
     return buffer
 
-# Carregar dados de cidades e velocidades de vento do CSV no GitHub
-csv_url = "https://raw.githubusercontent.com/VictorKyrus/C_VENTO/main/lista_de_isopletas_por_regi%C3%A3o_elgin.csv"
-try:
-    df = pd.read_csv(csv_url, sep=';', encoding='utf-8', on_bad_lines='skip')
-    city_data = df.to_dict('records')
-except Exception as e:
-    st.error("Erro ao carregar o arquivo CSV. Verifique a URL ou o formato do arquivo.")
-    city_data = []
+# Lista fixa de estados brasileiros
+brazilian_states = [
+    "Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará", "Distrito Federal",
+    "Espírito Santo", "Goiás", "Maranhão", "Mato Grosso", "Mato Grosso do Sul",
+    "Minas Gerais", "Pará", "Paraíba", "Paraná", "Pernambuco", "Piauí", "Rio de Janeiro",
+    "Rio Grande do Norte", "Rio Grande do Sul", "Rondônia", "Roraima", "Santa Catarina",
+    "São Paulo", "Sergipe", "Tocantins"
+]
 
 # Interface do Streamlit
 st.markdown("""
@@ -456,15 +456,12 @@ project_info = {
 }
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Card: Seleção de Cidade e Estado para Velocidade do Vento
+# Card: Seleção de Localização para Velocidade do Vento
 st.markdown('<div class="card"><div class="card-title">Seleção de Localização para Velocidade do Vento</div>', unsafe_allow_html=True)
-# Filtra apenas valores de "ESTADO" que são strings e não nulos
-states = sorted([str(city["ESTADO"]) for city in city_data if isinstance(city["ESTADO"], str) and city["ESTADO"]])
-state = st.selectbox("Selecione o Estado", [""] + states)
-cities = sorted([city["MUNICÍPIO"] for city in city_data if city["ESTADO"] == state and city["MUNICÍPIO"] is not None]) if state else []
-city = st.selectbox("Selecione a Cidade", [""] + cities)
-wind_speed = next((float(city_record["ISOPLETA"].split()[0]) for city_record in city_data if city_record["MUNICÍPIO"] == city and city_record["ESTADO"] == state), 42.0)
-st.write(f"Velocidade Básica do Vento (V0): {wind_speed} m/s")
+state = st.selectbox("Selecione o Estado", [""] + brazilian_states)
+city = st.text_input("Cidade", "São Paulo")
+v0 = st.number_input("V0 (m/s)", min_value=0.0, value=42.0)
+st.write(f"Velocidade Básica do Vento (V0): {v0} m/s")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Card 2: Dados da Edificação
@@ -480,7 +477,6 @@ with col2:
     z_fechamento = st.number_input("Altura Média - Fechamento (m)", min_value=0.0, value=13.0)
     z_cobertura = st.number_input("Altura Média - Cobertura (m)", min_value=0.0, value=13.8)
 portico_distance = st.number_input("Distância Entre Pórticos (m)", min_value=0.0, value=5.0)
-v0 = wind_speed
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Card 3: Parâmetros Meteorológicos
