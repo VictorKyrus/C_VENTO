@@ -195,17 +195,17 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
     story.append(project_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 2: Dados da Edificação
+    # Seção 2: Dados da Edificação (restaurada conforme a imagem)
     story.append(Paragraph("2. Dados da Edificação", heading_style))
     building_data = [
+        ["Descrição", "Valor"],
+        ["Tipo de Cobertura", data['roof_type']],
         ["Comprimento (\( l_1 \))", f"{data['length']:.1f} m"],
         ["Largura (\( l_2 \))", f"{data['width']:.1f} m"],
-        ["Pé-Direito", f"{data['height']:.1f} m"],
+        ["Pé Direito", f"{data['height']:.1f} m"],
         ["Inclinação da Cobertura", f"{data['slope']:.1f}%"],
         ["Altura Média - Fechamento (\( h \))", f"{data['z_fechamento']:.1f} m"],
         ["Altura Média - Cobertura", f"{data['z_cobertura']:.1f} m"],
-        ["Distância Entre Pórticos", f"{data['portico_distance']:.1f} m"],
-        ["Tipo de Cobertura", data['roof_type']]
     ]
     building_table = Table(building_data, colWidths=[5*cm, 5*cm])
     building_table.setStyle(TableStyle([
@@ -215,8 +215,8 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
         ('RIGHTPADDING', (0,0), (-1,-1), 5),
         ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
-        ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
-        ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.white, colors.whitesmoke]),
+        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
     ]))
     story.append(building_table)
     story.append(Spacer(1, 0.5*cm))
@@ -433,9 +433,9 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
         story.append(Image(img_buffer, width=12*cm, height=8*cm))
         story.append(Spacer(1, 0.5*cm))
 
-    # Seção 14: Força de Atrito Longitudinal (0° / 180°)
+    # Seção 14: Força de Atrito Longitudinal (0° / 180°) - Ajustada
     story.append(Paragraph("14. Força de Atrito Longitudinal (0° / 180°)", heading_style))
-    story.append(Paragraph("Conforme NBR 6123:2023, a força de atrito longitudinal (\( F' \)) é calculada quando \( l_2 / h > 4 \) ou \( l_2 / l_1 > 4 \).", body_style))
+    story.append(Paragraph("Esta seção verifica a força de atrito longitudinal conforme a NBR 6123:2023. Primeiro, é necessário verificar se a relação entre as dimensões da edificação atende a uma condição específica para que o cálculo seja aplicável.", body_style))
     
     # Usar valores do usuário
     l1 = data['length']  # Comprimento
@@ -450,31 +450,33 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
     l2_l1_ratio = l2 / l1
     condition_met = l2_h_ratio > 4 or l2_l1_ratio > 4
     
-    # Cálculo de F', F'_cob e F'_fec dependendo da condição de h
+    # Explicação da verificação
+    story.append(Paragraph("Verificação: Calculamos as relações \( l_2 / h \) e \( l_2 / l_1 \). Se \( l_2 / h > 4 \) ou \( l_2 / l_1 > 4 \), o cálculo da força de atrito longitudinal (F') deve ser realizado. Caso contrário, o cálculo não é aplicável.", body_style))
+    
     if condition_met:
+        story.append(Paragraph("A condição foi atendida (\( l_2 / h > 4 \) ou \( l_2 / l_1 > 4 \)). Vamos calcular a força de atrito longitudinal (F'), que é composta por duas partes: F' cob (relativa à cobertura) e F' fec (relativa ao fechamento).", body_style))
+        
         if h <= l1:
+            story.append(Paragraph("Condição adicional: Como \( h \leq l_1 \), usamos as seguintes fórmulas:", body_style))
+            story.append(Paragraph("F' cob = \( C_{fr} \cdot q_{cob} \cdot l_1 \cdot (l_2 - 4h) \)", body_style))
+            story.append(Paragraph("F' fec = \( C_{fr} \cdot q_{fec} \cdot 2h \cdot (l_2 - 4h) \)", body_style))
             F_cob = Cfr * q_cob * l1 * (l2 - 4 * h)
             F_fec = Cfr * q_fec * 2 * h * (l2 - 4 * h)
             F_prime = F_cob + F_fec
-            story.append(Paragraph("Condição: \( h \leq l_1 \)", body_style))
-            story.append(Paragraph("Fórmulas utilizadas:", body_style))
-            story.append(Paragraph("\( F'_{cob} = C_{fr} \cdot q_{cob} \cdot l_1 \cdot (l_2 - 4h) \)", body_style))
-            story.append(Paragraph("\( F'_{fec} = C_{fr} \cdot q_{fec} \cdot 2h \cdot (l_2 - 4h) \)", body_style))
-            story.append(Paragraph("\( F' = F'_{cob} + F'_{fec} \)", body_style))
         else:
+            story.append(Paragraph("Condição adicional: Como \( h > l_1 \), usamos as seguintes fórmulas:", body_style))
+            story.append(Paragraph("F' cob = \( C_{fr} \cdot q_{cob} \cdot l_1 \cdot (l_2 - 4h) \)", body_style))
+            story.append(Paragraph("F' fec = \( C_{fr} \cdot q_{fec} \cdot 2h \cdot (l_2 - 4l_1) \)", body_style))
             F_cob = Cfr * q_cob * l1 * (l2 - 4 * h)
             F_fec = Cfr * q_fec * 2 * h * (l2 - 4 * l1)
             F_prime = F_cob + F_fec
-            story.append(Paragraph("Condição: \( h > l_1 \)", body_style))
-            story.append(Paragraph("Fórmulas utilizadas:", body_style))
-            story.append(Paragraph("\( F'_{cob} = C_{fr} \cdot q_{cob} \cdot l_1 \cdot (l_2 - 4h) \)", body_style))
-            story.append(Paragraph("\( F'_{fec} = C_{fr} \cdot q_{fec} \cdot 2h \cdot (l_2 - 4l_1) \)", body_style))
-            story.append(Paragraph("\( F' = F'_{cob} + F'_{fec} \)", body_style))
+        
+        story.append(Paragraph("A força total F' é a soma de F' cob e F' fec: F' = F' cob + F' fec.", body_style))
     else:
         F_prime = "Não Aplicável"
         F_cob = "Não Aplicável"
         F_fec = "Não Aplicável"
-        story.append(Paragraph("Condição não atendida: \( l_2 / h \leq 4 \) e \( l_2 / l_1 \leq 4 \). Portanto, os cálculos de \( F' \), \( F'_{cob} \) e \( F'_{fec} \) não são aplicáveis.", body_style))
+        story.append(Paragraph("A condição não foi atendida (\( l_2 / h \leq 4 \) e \( l_2 / l_1 \leq 4 \)). Portanto, o cálculo da força de atrito longitudinal (F') não é necessário.", body_style))
     
     # Dados para a tabela
     friction_data = [
@@ -484,12 +486,12 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
         ["\( h \)", f"{format_with_comma(h)} m"],
         ["\( l_2 / h \)", f"{format_with_comma(l2_h_ratio)}"],
         ["\( l_2 / l_1 \)", f"{format_with_comma(l2_l1_ratio)}"],
-        ["\( C_{fr} \)", f"{format_with_comma(Cfr)}"],
-        ["\( q_{cob} \)", f"{format_with_comma(q_cob)} kgf/m²"],
-        ["\( q_{fec} \)", f"{format_with_comma(q_fec)} kgf/m²"],
-        ["\( F'_{cob} \)", f"{format_with_comma(F_cob)} kgf" if F_cob != "Não Aplicável" else F_cob],
-        ["\( F'_{fec} \)", f"{format_with_comma(F_fec)} kgf" if F_fec != "Não Aplicável" else F_fec],
-        ["\( F' \)", f"{format_with_comma(F_prime)} kgf" if F_prime != "Não Aplicável" else F_prime],
+        ["Cfr", f"{format_with_comma(Cfr)}"],
+        ["q cob", f"{format_with_comma(q_cob)} kgf/m²"],
+        ["q fec", f"{format_with_comma(q_fec)} kgf/m²"],
+        ["F' cob", f"{format_with_comma(F_cob)} kgf" if F_cob != "Não Aplicável" else F_cob],
+        ["F' fec", f"{format_with_comma(F_fec)} kgf" if F_fec != "Não Aplicável" else F_fec],
+        ["F'", f"{format_with_comma(F_prime)} kgf" if F_prime != "Não Aplicável" else F_prime],
     ]
     
     friction_table = Table(friction_data, colWidths=[5*cm, 5*cm])
