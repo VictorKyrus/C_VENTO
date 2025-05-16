@@ -18,18 +18,38 @@ import math
 def format_with_comma(value, decimals=2):
     return f"{value:.{decimals}f}".replace('.', ',')
 
-# Função para calcular S2
+# Função para calcular S2 com valores normativos corrigidos
 def calculate_s2(z, v0, category, class_):
-    bm_dict = {"I": 1.0, "II": 1.0, "III": 0.8, "IV": 0.7, "V": 0.6}
-    p_dict = {"I": 0.14, "II": 0.10, "III": 0.22, "IV": 0.28, "V": 0.35}
-    fr_dict = {"A": 1.0, "B": 0.95, "C": 0.9}
+    # Tabela de valores normativos
+    zg_values = {"I": 250, "II": 300, "III": 350, "IV": 420, "V": 500}
+    b_values = {
+        "I": {"A": 1.100, "B": 1.110, "C": 1.120},
+        "II": {"A": 1.000, "B": 1.000, "C": 1.000},
+        "III": {"A": 0.940, "B": 0.940, "C": 0.930},
+        "IV": {"A": 0.860, "B": 0.850, "C": 0.840},
+        "V": {"A": 0.740, "B": 0.730, "C": 0.710}
+    }
+    p_values = {
+        "I": {"A": 0.060, "B": 0.065, "C": 0.070},
+        "II": {"A": 0.085, "B": 0.090, "C": 0.100},
+        "III": {"A": 0.100, "B": 0.105, "C": 0.115},
+        "IV": {"A": 0.120, "B": 0.125, "C": 0.135},
+        "V": {"A": 0.150, "B": 0.160, "C": 0.175}
+    }
+    fr_values = {
+        "II": {"A": 1.000, "B": 0.980, "C": 0.950},
+        "III": {"A": 1.000, "B": 0.980, "C": 0.950},  # Assumindo Fr igual a II para III, IV, V onde não especificado
+        "IV": {"A": 1.000, "B": 0.980, "C": 0.950},
+        "V": {"A": 1.000, "B": 0.980, "C": 0.950}
+    }
     
-    bm = bm_dict[category]
-    p = p_dict[category]
-    fr = fr_dict[class_]
+    b = b_values[category][class_]
+    p = p_values[category][class_]
+    fr = fr_values.get(category, {"A": 1.000, "B": 0.980, "C": 0.950})[class_]  # Usa 1.0 para I se não definido
+    zg = zg_values[category]
     
-    s2 = bm * (z / 10) ** p * fr if z > 0 else 0
-    return s2, bm, p, fr
+    s2 = b * (z / 10) ** p * fr if z > 0 else 0
+    return s2, b, p, fr
 
 # Função para criar gráfico de velocidade do vento em função da altura
 def create_velocity_height_graph(z_values, vk_values):
@@ -183,7 +203,7 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
         ["Fator S2 - Fechamento", format_with_comma(results['s2_fechamento'])],
         ["Fator S2 - Cobertura", format_with_comma(results['s2_cobertura'])],
         ["Fator Estatístico (S3)", f"{data['s3']} (Tp: {data['s3_tp']} anos)"],
-        ["Parâmetro bm", format_with_comma(results['bm'])],
+        ["Parâmetro b", format_with_comma(results['b'])],
         ["Parâmetro p", format_with_comma(results['p'])],
         ["Parâmetro Fr", format_with_comma(results['fr'])]
     ]
@@ -342,7 +362,7 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
     # Seção 11: Metodologia de Cálculo
     story.append(Paragraph("11. Metodologia de Cálculo", heading_style))
     story.append(Paragraph("Velocidade Característica do Vento (Vk): Vk = V0 * S1 * S2 * S3", body_style))
-    story.append(Paragraph("Fator S2: S2 = bm * (z/10)^p * Fr", body_style))
+    story.append(Paragraph("Fator S2: S2 = b * (z/10)^p * Fr", body_style))
     story.append(Paragraph("Pressão Dinâmica do Vento (q): q = 0,613 * Vk^2 (N/m²); q = (0,613 * Vk^2) / 9,81 (kgf/m²)", body_style))
     story.append(Paragraph("Pressão Efetiva (DP): DP = (Ce - Cpi) * q", body_style))
     if data['roof_type'] == "Duas Águas":
@@ -586,9 +606,9 @@ s3_options = {
 s3 = st.selectbox("Fator Estatístico (S3)", list(s3_options.keys()), format_func=lambda x: s3_options[x], index=0)
 s3_tp = {1.11: 100, 1.06: 75, 1.00: 50, 0.95: 37, 0.83: 15}[s3]
 
-s2_fechamento, bm, p, fr = calculate_s2(z_fechamento, v0, category, class_)
+s2_fechamento, b, p, fr = calculate_s2(z_fechamento, v0, category, class_)
 s2_cobertura, _, _, _ = calculate_s2(z_cobertura, v0, category, class_)
-st.write(f"Parâmetros S2: bm = {format_with_comma(bm)}, p = {format_with_comma(p)}, Fr = {format_with_comma(fr)}")
+st.write(f"Parâmetros S2: b = {format_with_comma(b)}, p = {format_with_comma(p)}, Fr = {format_with_comma(fr)}")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Card 5: Coeficientes de Pressão
@@ -761,7 +781,7 @@ results = {
     "ce_cobertura_0": ce_cobertura_0,
     "ce_cobertura_90": ce_cobertura_90,
     "dp_results": dp_results,
-    "bm": bm,
+    "b": b,
     "p": p,
     "fr": fr
 }
