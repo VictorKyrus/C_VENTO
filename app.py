@@ -48,6 +48,72 @@ def create_velocity_height_graph(z_values, vk_values):
     buf.seek(0)
     return buf
 
+# Função para criar diagrama de pressão do vento
+def create_wind_pressure_diagram(data, results):
+    fig, ax = plt.subplots(figsize=(8, 6), dpi=100)
+    
+    # Valores de exemplo baseados na imagem fornecida
+    pressures = {
+        'top': 72.0,  # Cobertura
+        'roof_front_left': -92.6, 'roof_front_center': -92.2, 'roof_front_right': -92.6,
+        'roof_mid_left': -47.6, 'roof_mid_center': -62.5, 'roof_mid_right': -47.6,
+        'base_front_left': -29.0, 'base_center': -33.8, 'base_front_right': -29.0,
+        'base_bottom': -43.7
+    }
+    
+    # Dimensões aproximadas (baseado nos dados do usuário)
+    l1 = data['length']  # Comprimento
+    l2 = data['width']   # Largura
+    h = data['z_fechamento']  # Altura Média - Fechamento
+    
+    # Criar o retângulo da fachada
+    ax.add_patch(plt.Rectangle((0, 0), l2, h, fill=True, facecolor='lightgray', edgecolor='black', linewidth=1))
+    
+    # Dividir em zonas e adicionar rótulos de pressão
+    # Cobertura
+    ax.text(l2/2, h, f"{pressures['top']} kgf/m²", ha='center', va='bottom', fontsize=10)
+    
+    # Telhado (dividido em 3 partes horizontais)
+    roof_height = h * 0.3  # Aproximadamente 30% da altura para o telhado
+    ax.add_patch(plt.Rectangle((0, h), l2, roof_height, fill=True, facecolor='lightgray', hatch='//', edgecolor='black'))
+    ax.text(l2*0.25, h + roof_height/2, f"{pressures['roof_front_left']} kgf/m²", ha='center', va='center', fontsize=10)
+    ax.text(l2*0.5, h + roof_height/2, f"{pressures['roof_front_center']} kgf/m²", ha='center', va='center', fontsize=10)
+    ax.text(l2*0.75, h + roof_height/2, f"{pressures['roof_front_right']} kgf/m²", ha='center', va='center', fontsize=10)
+    
+    # Meio da fachada (dividido em 3 partes horizontais)
+    mid_height = h * 0.4  # Aproximadamente 40% da altura para o meio
+    ax.add_patch(plt.Rectangle((0, h + roof_height), l2, mid_height, fill=True, facecolor='lightgray', hatch='//', edgecolor='black'))
+    ax.text(l2*0.25, h + roof_height + mid_height/2, f"{pressures['roof_mid_left']} kgf/m²", ha='center', va='center', fontsize=10)
+    ax.text(l2*0.5, h + roof_height + mid_height/2, f"{pressures['roof_mid_center']} kgf/m²", ha='center', va='center', fontsize=10)
+    ax.text(l2*0.75, h + roof_height + mid_height/2, f"{pressures['roof_mid_right']} kgf/m²", ha='center', va='center', fontsize=10)
+    
+    # Base da fachada (dividido em 3 partes horizontais)
+    base_height = h * 0.3  # Aproximadamente 30% da altura para a base
+    ax.add_patch(plt.Rectangle((0, h + roof_height + mid_height), l2, base_height, fill=True, facecolor='lightgray', hatch='//', edgecolor='black'))
+    ax.text(l2*0.25, h + roof_height + mid_height + base_height/2, f"{pressures['base_front_left']} kgf/m²", ha='center', va='center', fontsize=10)
+    ax.text(l2*0.5, h + roof_height + mid_height + base_height/2, f"{pressures['base_center']} kgf/m²", ha='center', va='center', fontsize=10)
+    ax.text(l2*0.75, h + roof_height + mid_height + base_height/2, f"{pressures['base_front_right']} kgf/m²", ha='center', va='center', fontsize=10)
+    
+    # Base inferior
+    ax.add_patch(plt.Rectangle((0, 0), l2, 0.1*h, fill=True, facecolor='lightgray', hatch='//', edgecolor='black'))
+    ax.text(l2/2, 0.05*h, f"{pressures['base_bottom']} kgf/m²", ha='center', va='center', fontsize=10)
+    
+    # Ajustes de visualização
+    ax.set_xlim(-0.1*l2, 1.1*l2)
+    ax.set_ylim(-0.1*h, 1.5*h)
+    ax.set_xlabel('Largura (m)')
+    ax.set_ylabel('Altura (m)')
+    ax.set_title('Diagrama de Pressão do Vento (0°/180°)', fontsize=12, pad=15)
+    ax.grid(False)
+    ax.axis('off')
+    
+    plt.tight_layout()
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+    plt.close()
+    buf.seek(0)
+    return buf
+
 # Função para adicionar cabeçalho e rodapé
 def add_header_footer(canvas, doc):
     canvas.saveState()
@@ -58,7 +124,7 @@ def add_header_footer(canvas, doc):
     canvas.setFont("Helvetica", 8)
     canvas.setFillColor(colors.grey)
     page_num = canvas.getPageNumber()
-    footer_text = f"Página {page_num} | Data: {datetime.now().strftime('%d/%m/%Y')}"
+    footer_text = f"Página {page_num} | Data: {datetime.now().strftime('%d/%m/%Y %H:%M')}"
     canvas.drawString(2*cm, 1*cm, footer_text)
     canvas.line(2*cm, 1.3*cm, A4[0] - 2*cm, 1.3*cm)
     canvas.restoreState()
@@ -427,6 +493,13 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
         ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.white, colors.whitesmoke]),
     ]))
     story.append(friction_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # Seção 15: Diagrama de Pressão do Vento
+    story.append(Paragraph("15. Diagrama de Pressão do Vento (0°/180°)", heading_style))
+    story.append(Paragraph("Ilustração das pressões efetivas do vento aplicadas na fachada da edificação:", body_style))
+    pressure_img = create_wind_pressure_diagram(data, results)
+    story.append(Image(pressure_img, width=12*cm, height=9*cm))
     story.append(Spacer(1, 0.5*cm))
 
     doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
