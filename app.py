@@ -20,8 +20,8 @@ def format_with_comma(value, decimals=2):
 
 # Função para calcular S2
 def calculate_s2(z, v0, category, class_):
-    bm_dict = {"I": 1.0, "II": 0.9, "III": 0.8, "IV": 0.7, "V": 0.6}
-    p_dict = {"I": 0.14, "II": 0.18, "III": 0.22, "IV": 0.28, "V": 0.35}
+    bm_dict = {"I": 1.0, "II": 1.0, "III": 0.8, "IV": 0.7, "V": 0.6}
+    p_dict = {"I": 0.14, "II": 0.10, "III": 0.22, "IV": 0.28, "V": 0.35}
     fr_dict = {"A": 1.0, "B": 0.95, "C": 0.9}
     
     bm = bm_dict[category]
@@ -463,7 +463,7 @@ states = sorted([str(city["ESTADO"]) for city in city_data if isinstance(city["E
 state = st.selectbox("Selecione o Estado", [""] + states)
 cities = sorted([city["MUNICÍPIO"] for city in city_data if city["ESTADO"] == state and city["MUNICÍPIO"] is not None]) if state else []
 city = st.selectbox("Selecione a Cidade", [""] + cities)
-wind_speed = next((float(city["ISOPLETA"].split()[0]) for city in city_data if city["MUNICÍPIO"] == city and city["ESTADO"] == state), 42.0)
+wind_speed = next((float(city_record["ISOPLETA"].split()[0]) for city_record in city_data if city_record["MUNICÍPIO"] == city and city_record["ESTADO"] == state), 42.0)
 st.write(f"Velocidade Básica do Vento (V0): {wind_speed} m/s")
 st.markdown('</div>', unsafe_allow_html=True)
 
