@@ -48,72 +48,6 @@ def create_velocity_height_graph(z_values, vk_values):
     buf.seek(0)
     return buf
 
-# Função para criar diagrama de pressão do vento
-def create_wind_pressure_diagram(data, results):
-    fig, ax = plt.subplots(figsize=(8, 6), dpi=100)
-    
-    # Valores de exemplo baseados na imagem fornecida
-    pressures = {
-        'top': 72.0,  # Cobertura
-        'roof_front_left': -92.6, 'roof_front_center': -92.2, 'roof_front_right': -92.6,
-        'roof_mid_left': -47.6, 'roof_mid_center': -62.5, 'roof_mid_right': -47.6,
-        'base_front_left': -29.0, 'base_center': -33.8, 'base_front_right': -29.0,
-        'base_bottom': -43.7
-    }
-    
-    # Dimensões aproximadas (baseado nos dados do usuário)
-    l1 = data['length']  # Comprimento
-    l2 = data['width']   # Largura
-    h = data['z_fechamento']  # Altura Média - Fechamento
-    
-    # Criar o retângulo da fachada
-    ax.add_patch(plt.Rectangle((0, 0), l2, h, fill=True, facecolor='lightgray', edgecolor='black', linewidth=1))
-    
-    # Dividir em zonas e adicionar rótulos de pressão
-    # Cobertura
-    ax.text(l2/2, h, f"{pressures['top']} kgf/m²", ha='center', va='bottom', fontsize=10)
-    
-    # Telhado (dividido em 3 partes horizontais)
-    roof_height = h * 0.3  # Aproximadamente 30% da altura para o telhado
-    ax.add_patch(plt.Rectangle((0, h), l2, roof_height, fill=True, facecolor='lightgray', hatch='//', edgecolor='black'))
-    ax.text(l2*0.25, h + roof_height/2, f"{pressures['roof_front_left']} kgf/m²", ha='center', va='center', fontsize=10)
-    ax.text(l2*0.5, h + roof_height/2, f"{pressures['roof_front_center']} kgf/m²", ha='center', va='center', fontsize=10)
-    ax.text(l2*0.75, h + roof_height/2, f"{pressures['roof_front_right']} kgf/m²", ha='center', va='center', fontsize=10)
-    
-    # Meio da fachada (dividido em 3 partes horizontais)
-    mid_height = h * 0.4  # Aproximadamente 40% da altura para o meio
-    ax.add_patch(plt.Rectangle((0, h + roof_height), l2, mid_height, fill=True, facecolor='lightgray', hatch='//', edgecolor='black'))
-    ax.text(l2*0.25, h + roof_height + mid_height/2, f"{pressures['roof_mid_left']} kgf/m²", ha='center', va='center', fontsize=10)
-    ax.text(l2*0.5, h + roof_height + mid_height/2, f"{pressures['roof_mid_center']} kgf/m²", ha='center', va='center', fontsize=10)
-    ax.text(l2*0.75, h + roof_height + mid_height/2, f"{pressures['roof_mid_right']} kgf/m²", ha='center', va='center', fontsize=10)
-    
-    # Base da fachada (dividido em 3 partes horizontais)
-    base_height = h * 0.3  # Aproximadamente 30% da altura para a base
-    ax.add_patch(plt.Rectangle((0, h + roof_height + mid_height), l2, base_height, fill=True, facecolor='lightgray', hatch='//', edgecolor='black'))
-    ax.text(l2*0.25, h + roof_height + mid_height + base_height/2, f"{pressures['base_front_left']} kgf/m²", ha='center', va='center', fontsize=10)
-    ax.text(l2*0.5, h + roof_height + mid_height + base_height/2, f"{pressures['base_center']} kgf/m²", ha='center', va='center', fontsize=10)
-    ax.text(l2*0.75, h + roof_height + mid_height + base_height/2, f"{pressures['base_front_right']} kgf/m²", ha='center', va='center', fontsize=10)
-    
-    # Base inferior
-    ax.add_patch(plt.Rectangle((0, 0), l2, 0.1*h, fill=True, facecolor='lightgray', hatch='//', edgecolor='black'))
-    ax.text(l2/2, 0.05*h, f"{pressures['base_bottom']} kgf/m²", ha='center', va='center', fontsize=10)
-    
-    # Ajustes de visualização
-    ax.set_xlim(-0.1*l2, 1.1*l2)
-    ax.set_ylim(-0.1*h, 1.5*h)
-    ax.set_xlabel('Largura (m)')
-    ax.set_ylabel('Altura (m)')
-    ax.set_title('Diagrama de Pressão do Vento (0°/180°)', fontsize=12, pad=15)
-    ax.grid(False)
-    ax.axis('off')
-    
-    plt.tight_layout()
-    buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
-    plt.close()
-    buf.seek(0)
-    return buf
-
 # Função para adicionar cabeçalho e rodapé
 def add_header_footer(canvas, doc):
     canvas.saveState()
@@ -433,9 +367,13 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
         story.append(Image(img_buffer, width=12*cm, height=8*cm))
         story.append(Spacer(1, 0.5*cm))
 
-    # Seção 14: Força de Atrito Longitudinal (0° / 180°) - Ajustada
+    # Seção 14: Força de Atrito Longitudinal (0° / 180°) - Melhorada
     story.append(Paragraph("14. Força de Atrito Longitudinal (0° / 180°)", heading_style))
-    story.append(Paragraph("Esta seção verifica a força de atrito longitudinal conforme a NBR 6123:2023. Primeiro, calculamos as relações l2 dividido por h e l2 dividido por l1 para verificar se o cálculo é necessário.", body_style))
+    story.append(Paragraph("Esta seção verifica a força de atrito longitudinal conforme a NBR 6123:2023.", body_style))
+    
+    # Subseção: Verificação Inicial
+    story.append(Paragraph("Verificação Inicial", subheading_style))
+    story.append(Paragraph("Primeiro, verificamos as dimensões da edificação. Calculamos l2 dividido por h e l2 dividido por l1. O cálculo da força F' é necessário somente se l2 dividido por h for maior que 4 ou se l2 dividido por l1 for maior que 4.", body_style))
     
     # Usar valores do usuário
     l1 = data['length']  # Comprimento
@@ -450,19 +388,22 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
     l2_l1_ratio = l2 / l1
     condition_met = l2_h_ratio > 4 or l2_l1_ratio > 4
     
-    # Explicação da verificação
-    story.append(Paragraph("Verificação: Se l2 dividido por h for maior que 4 ou l2 dividido por l1 for maior que 4, o cálculo da força de atrito longitudinal (F') deve ser realizado. Caso contrário, o cálculo não é aplicável.", body_style))
-    
     if condition_met:
-        story.append(Paragraph("A condição foi atendida. Vamos calcular a força de atrito longitudinal (F'), que é composta por duas partes: F' cob (relativa à cobertura) e F' fec (relativa ao fechamento).", body_style))
+        # Subseção: Cálculo da Força
+        story.append(Paragraph("Cálculo da Força", subheading_style))
+        story.append(Paragraph("A condição foi atendida. Agora, calculamos a força F'. Ela é composta por duas partes: F' cob (para a cobertura) e F' fec (para o fechamento).", body_style))
         
         if h <= l1:
-            story.append(Paragraph("Como h é menor ou igual a l1, usamos estas fórmulas simples: F' cob = Cfr vezes q cob vezes l1 vezes (l2 menos 4 vezes h), e F' fec = Cfr vezes q fec vezes 2 vezes h vezes (l2 menos 4 vezes h).", body_style))
+            story.append(Paragraph("Como h é menor ou igual a l1, usamos as seguintes fórmulas:", body_style))
+            story.append(Paragraph("F' cob = Cfr vezes q cob vezes l1 vezes (l2 menos 4 vezes h).", body_style))
+            story.append(Paragraph("F' fec = Cfr vezes q fec vezes 2 vezes h vezes (l2 menos 4 vezes h).", body_style))
             F_cob = Cfr * q_cob * l1 * (l2 - 4 * h)
             F_fec = Cfr * q_fec * 2 * h * (l2 - 4 * h)
             F_prime = F_cob + F_fec
         else:
-            story.append(Paragraph("Como h é maior que l1, usamos estas fórmulas simples: F' cob = Cfr vezes q cob vezes l1 vezes (l2 menos 4 vezes h), e F' fec = Cfr vezes q fec vezes 2 vezes h vezes (l2 menos 4 vezes l1).", body_style))
+            story.append(Paragraph("Como h é maior que l1, usamos as seguintes fórmulas:", body_style))
+            story.append(Paragraph("F' cob = Cfr vezes q cob vezes l1 vezes (l2 menos 4 vezes h).", body_style))
+            story.append(Paragraph("F' fec = Cfr vezes q fec vezes 2 vezes h vezes (l2 menos 4 vezes l1).", body_style))
             F_cob = Cfr * q_cob * l1 * (l2 - 4 * h)
             F_fec = Cfr * q_fec * 2 * h * (l2 - 4 * l1)
             F_prime = F_cob + F_fec
@@ -472,22 +413,24 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
         F_prime = "Não Aplicável"
         F_cob = "Não Aplicável"
         F_fec = "Não Aplicável"
-        story.append(Paragraph("A condição não foi atendida (l2 dividido por h é menor ou igual a 4 e l2 dividido por l1 é menor ou igual a 4). Portanto, o cálculo da força de atrito longitudinal (F') não é necessário.", body_style))
+        story.append(Paragraph("Resultado", subheading_style))
+        story.append(Paragraph("A condição não foi atendida. l2 dividido por h é menor ou igual a 4 e l2 dividido por l1 também é menor ou igual a 4. Portanto, o cálculo da força F' não é necessário.", body_style))
     
-    # Dados para a tabela
+    # Subseção: Resultados na Tabela
+    story.append(Paragraph("Resultados", subheading_style))
     friction_data = [
         ["Parâmetro", "Valor"],
-        ["l1", f"{format_with_comma(l1)} m"],
-        ["l2", f"{format_with_comma(l2)} m"],
-        ["h", f"{format_with_comma(h)} m"],
+        ["Comprimento (l1)", f"{format_with_comma(l1)} m"],
+        ["Largura (l2)", f"{format_with_comma(l2)} m"],
+        ["Altura Média (h)", f"{format_with_comma(h)} m"],
         ["l2 dividido por h", f"{format_with_comma(l2_h_ratio)}"],
         ["l2 dividido por l1", f"{format_with_comma(l2_l1_ratio)}"],
-        ["Cfr", f"{format_with_comma(Cfr)}"],
-        ["q cob", f"{format_with_comma(q_cob)} kgf/m²"],
-        ["q fec", f"{format_with_comma(q_fec)} kgf/m²"],
-        ["F' cob", f"{format_with_comma(F_cob)} kgf" if F_cob != "Não Aplicável" else F_cob],
-        ["F' fec", f"{format_with_comma(F_fec)} kgf" if F_fec != "Não Aplicável" else F_fec],
-        ["F'", f"{format_with_comma(F_prime)} kgf" if F_prime != "Não Aplicável" else F_prime],
+        ["Fator Cfr", f"{format_with_comma(Cfr)}"],
+        ["Pressão q cob", f"{format_with_comma(q_cob)} kgf/m²"],
+        ["Pressão q fec", f"{format_with_comma(q_fec)} kgf/m²"],
+        ["Força F' cob", f"{format_with_comma(F_cob)} kgf" if F_cob != "Não Aplicável" else F_cob],
+        ["Força F' fec", f"{format_with_comma(F_fec)} kgf" if F_fec != "Não Aplicável" else F_fec],
+        ["Força Total F'", f"{format_with_comma(F_prime)} kgf" if F_prime != "Não Aplicável" else F_prime],
     ]
     
     friction_table = Table(friction_data, colWidths=[5*cm, 5*cm])
@@ -504,11 +447,55 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
     story.append(friction_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 15: Diagrama de Pressão do Vento
-    story.append(Paragraph("15. Diagrama de Pressão do Vento (0°/180°)", heading_style))
-    story.append(Paragraph("Ilustração das pressões efetivas do vento aplicadas na fachada da edificação:", body_style))
-    pressure_img = create_wind_pressure_diagram(data, results)
-    story.append(Image(pressure_img, width=12*cm, height=9*cm))
+    # Seção 15: Tabela de Pressão do Vento (0°/180°) - Substituída por Tabela
+    story.append(Paragraph("15. Tabela de Pressão do Vento (0°/180°)", heading_style))
+    story.append(Paragraph("Valores das pressões efetivas do vento aplicadas na edificação (em kgf/m²):", body_style))
+    
+    # Dados da tabela com base na imagem fornecida
+    pressure_data = [
+        ["", "", "Cobertura", "", ""],  # Linha 1: Cobertura (mesclada)
+        ["", "", "72,0", "", ""],       # Linha 2: Valor da cobertura
+        ["", "Telhado", "", "", ""],    # Linha 3: Telhado (dividido em 3 partes)
+        ["", "-92,6", "-92,2", "-92,6", ""],  # Linha 4: Valores do telhado
+        ["", "Fachada (Meio)", "", "", ""],  # Linha 5: Fachada Meio (dividido em 3 partes)
+        ["", "-47,6", "-62,5", "-47,6", ""],  # Linha 6: Valores da fachada meio
+        ["", "Fachada (Base)", "", "", ""],  # Linha 7: Fachada Base (dividido em 3 partes)
+        ["", "-29,0", "-33,8", "-29,0", ""],  # Linha 8: Valores da fachada base
+        ["", "", "Base Inferior", "", ""],  # Linha 9: Base Inferior (mesclada)
+        ["", "", "-43,7", "", ""],       # Linha 10: Valor da base inferior
+    ]
+    
+    pressure_table = Table(pressure_data, colWidths=[1*cm, 2*cm, 2*cm, 2*cm, 1*cm])
+    pressure_table.setStyle(TableStyle([
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        # Bordas externas e internas
+        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+        # Mesclar células para "Cobertura"
+        ('SPAN', (2,0), (4,0)),
+        ('SPAN', (2,1), (4,1)),
+        ('BACKGROUND', (2,0), (4,1), colors.lightgrey),
+        # Mesclar células para "Telhado"
+        ('SPAN', (1,2), (4,2)),
+        ('BACKGROUND', (1,2), (4,3), colors.whitesmoke),
+        # Mesclar células para "Fachada (Meio)"
+        ('SPAN', (1,4), (4,4)),
+        ('BACKGROUND', (1,4), (4,5), colors.whitesmoke),
+        # Mesclar células para "Fachada (Base)"
+        ('SPAN', (1,6), (4,6)),
+        ('BACKGROUND', (1,6), (4,7), colors.whitesmoke),
+        # Mesclar células para "Base Inferior"
+        ('SPAN', (2,8), (4,8)),
+        ('SPAN', (2,9), (4,9)),
+        ('BACKGROUND', (2,8), (4,9), colors.lightgrey),
+        # Ajustar padding
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(pressure_table)
     story.append(Spacer(1, 0.5*cm))
 
     doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
