@@ -458,7 +458,8 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # Card: Seleção de Cidade e Estado para Velocidade do Vento
 st.markdown('<div class="card"><div class="card-title">Seleção de Localização para Velocidade do Vento</div>', unsafe_allow_html=True)
-states = sorted(list(set(city["ESTADO"] for city in city_data if city["ESTADO"] is not None)))
+# Filtra apenas valores de "ESTADO" que são strings e não nulos
+states = sorted([str(city["ESTADO"]) for city in city_data if isinstance(city["ESTADO"], str) and city["ESTADO"]])
 state = st.selectbox("Selecione o Estado", [""] + states)
 cities = sorted([city["MUNICÍPIO"] for city in city_data if city["ESTADO"] == state and city["MUNICÍPIO"] is not None]) if state else []
 city = st.selectbox("Selecione a Cidade", [""] + cities)
@@ -565,21 +566,34 @@ wind_forces = {}
 if roof_type == "Duas Águas":
     # Calcular o ângulo de inclinação (theta) a partir do percentual de inclinação
     theta = math.atan(slope / 100)  # slope em % convertido para radianos
+    tan_theta = math.tan(theta)
+    
+    # Calcular coeficientes Ce para barlavento (CPb) e sotavento (CPs) conforme NBR 6123:2023 Tabela 25
+    if 0 <= tan_theta <= 0.07:
+        cpb = 1.4 - 3.5 * tan_theta
+        cps = -0.4
+    elif 0.07 < tan_theta <= 0.4:
+        cpb = -1.4 + 3.5 * tan_theta
+        cps = -0.4
+    else:
+        cpb = -0.9  # Valor padrão para ângulos fora da faixa (sucção máxima)
+        cps = -0.6  # Valor padrão para sotavento
+    
     # Calcular a área de cada água
     width_inclined = (width / 2) / math.cos(theta)  # Largura inclinada de cada água
     area_per_water = length * width_inclined  # Área de cada água (barlavento e sotavento)
 
     for direction, ce_values in [
-        ("Cobertura (0°/180°)", ce_cobertura_0),
-        ("Cobertura (90°/270°)", ce_cobertura_90)
+        ("Cobertura (0°/180°)", [cpb, cps]),  # Usando CPb e CPs para barlavento e sotavento
+        ("Cobertura (90°/270°)", [cpb, cps])  # Mesmos coeficientes para perpendicular
     ]:
         q = q_cobertura_kgfm2  # Pressão dinâmica em kgf/m²
         dp_data = []
         force_data = []
-        for ce in ce_values:
+        for i, ce in enumerate(ce_values):
             for cp in cpi:
                 dp = q * (ce - cp)  # DP em kgf/m²
-                force = dp * area_per_water  # Força em kgf
+                force = dp * area_per_water if i == 0 else dp * area_per_water  # Força para barlavento e sotavento
                 dp_data.append([format_with_comma(ce), format_with_comma(cp), format_with_comma(dp)])
                 force_data.append([
                     format_with_comma(ce),
