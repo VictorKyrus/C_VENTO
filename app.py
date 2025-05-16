@@ -367,7 +367,7 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
         story.append(Image(img_buffer, width=12*cm, height=8*cm))
         story.append(Spacer(1, 0.5*cm))
 
-    # Seção 14: Força de Atrito Longitudinal (0° / 180°) - Melhorada
+    # Seção 14: Força de Atrito Longitudinal (0° / 180°)
     story.append(Paragraph("14. Força de Atrito Longitudinal (0° / 180°)", heading_style))
     story.append(Paragraph("Esta seção verifica a força de atrito longitudinal conforme a NBR 6123:2023.", body_style))
     
@@ -447,55 +447,109 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
     story.append(friction_table)
     story.append(Spacer(1, 0.5*cm))
 
-    # Seção 15: Tabela de Pressão do Vento (0°/180°) - Substituída por Tabela
+    # Seção 15: Tabela de Pressão do Vento (0°/180°) - Usando valores calculados
     story.append(Paragraph("15. Tabela de Pressão do Vento (0°/180°)", heading_style))
-    story.append(Paragraph("Valores das pressões efetivas do vento aplicadas na edificação (em kgf/m²):", body_style))
-    
-    # Dados da tabela com base na imagem fornecida
-    pressure_data = [
-        ["", "", "Cobertura", "", ""],  # Linha 1: Cobertura (mesclada)
-        ["", "", "72,0", "", ""],       # Linha 2: Valor da cobertura
-        ["", "Telhado", "", "", ""],    # Linha 3: Telhado (dividido em 3 partes)
-        ["", "-92,6", "-92,2", "-92,6", ""],  # Linha 4: Valores do telhado
-        ["", "Fachada (Meio)", "", "", ""],  # Linha 5: Fachada Meio (dividido em 3 partes)
-        ["", "-47,6", "-62,5", "-47,6", ""],  # Linha 6: Valores da fachada meio
-        ["", "Fachada (Base)", "", "", ""],  # Linha 7: Fachada Base (dividido em 3 partes)
-        ["", "-29,0", "-33,8", "-29,0", ""],  # Linha 8: Valores da fachada base
-        ["", "", "Base Inferior", "", ""],  # Linha 9: Base Inferior (mesclada)
-        ["", "", "-43,7", "", ""],       # Linha 10: Valor da base inferior
+    story.append(Paragraph("Valores das pressões efetivas do vento aplicadas na edificação (em kgf/m²), baseados nos cálculos anteriores:", body_style))
+
+    # Extrair valores de dp_results para preencher a tabela
+    dp_fechamento_0 = [row[2] for row in results['dp_results'].get("Fechamento (0°/180°)", [])]
+    dp_cobertura_0 = [row[2] for row in results['dp_results'].get("Cobertura (0°/180°)", [])]
+
+    # Mapear os valores para corresponder ao layout da planilha
+    # Supondo que os valores sejam ordenados: Cobertura, Telhado (3 partes), Fachada Meio (3 partes), Fachada Base (3 partes), Base Inferior
+    pressure_parallel_cpi_0 = [
+        ["", "", "Vento Paralelo à Cumeeira com Cpi = 0,00", "", ""],
+        ["", "", dp_cobertura_0[0] if dp_cobertura_0 else "N/A", "", ""],  # Cobertura
+        ["", "Telhado", "", "", ""],
+        ["", dp_fechamento_0[0] if len(dp_fechamento_0) > 0 else "N/A", dp_fechamento_0[1] if len(dp_fechamento_0) > 1 else "N/A", dp_fechamento_0[2] if len(dp_fechamento_0) > 2 else "N/A", ""],
+        ["", "Fachada (Meio)", "", "", ""],
+        ["", dp_fechamento_0[3] if len(dp_fechamento_0) > 3 else "N/A", dp_fechamento_0[4] if len(dp_fechamento_0) > 4 else "N/A", dp_fechamento_0[5] if len(dp_fechamento_0) > 5 else "N/A", ""],
+        ["", "Fachada (Base)", "", "", ""],
+        ["", dp_fechamento_0[6] if len(dp_fechamento_0) > 6 else "N/A", dp_fechamento_0[7] if len(dp_fechamento_0) > 7 else "N/A", dp_fechamento_0[8] if len(dp_fechamento_0) > 8 else "N/A", ""],
+        ["", "", "Base Inferior", "", ""],
+        ["", "", dp_fechamento_0[9] if len(dp_fechamento_0) > 9 else "N/A", "", ""],
+        ["", "", "Vento Paralelo à Cumeeira com Cpi = -0,30", "", ""],
+        ["", "", dp_cobertura_0[1] if len(dp_cobertura_0) > 1 else "N/A", "", ""],  # Cobertura
+        ["", "Telhado", "", "", ""],
+        ["", dp_fechamento_0[10] if len(dp_fechamento_0) > 10 else "N/A", dp_fechamento_0[11] if len(dp_fechamento_0) > 11 else "N/A", dp_fechamento_0[12] if len(dp_fechamento_0) > 12 else "N/A", ""],
+        ["", "Fachada (Meio)", "", "", ""],
+        ["", dp_fechamento_0[13] if len(dp_fechamento_0) > 13 else "N/A", dp_fechamento_0[14] if len(dp_fechamento_0) > 14 else "N/A", dp_fechamento_0[15] if len(dp_fechamento_0) > 15 else "N/A", ""],
+        ["", "Fachada (Base)", "", "", ""],
+        ["", dp_fechamento_0[16] if len(dp_fechamento_0) > 16 else "N/A", dp_fechamento_0[17] if len(dp_fechamento_0) > 17 else "N/A", dp_fechamento_0[18] if len(dp_fechamento_0) > 18 else "N/A", ""],
+        ["", "", "Base Inferior", "", ""],
+        ["", "", dp_fechamento_0[19] if len(dp_fechamento_0) > 19 else "N/A", "", ""],
     ]
-    
-    pressure_table = Table(pressure_data, colWidths=[1*cm, 2*cm, 2*cm, 2*cm, 1*cm])
-    pressure_table.setStyle(TableStyle([
+
+    pressure_perpendicular_cpi_0 = [
+        ["", "", "Vento Perpendicular à Cumeeira com Cpi = 0,00", "", ""],
+        ["", "", dp_cobertura_0[2] if len(dp_cobertura_0) > 2 else "N/A", "", ""],  # Cobertura
+        ["", "Telhado", "", "", ""],
+        ["", dp_fechamento_0[20] if len(dp_fechamento_0) > 20 else "N/A", dp_fechamento_0[21] if len(dp_fechamento_0) > 21 else "N/A", dp_fechamento_0[22] if len(dp_fechamento_0) > 22 else "N/A", ""],
+        ["", "Fachada (Meio)", "", "", ""],
+        ["", dp_fechamento_0[23] if len(dp_fechamento_0) > 23 else "N/A", dp_fechamento_0[24] if len(dp_fechamento_0) > 24 else "N/A", dp_fechamento_0[25] if len(dp_fechamento_0) > 25 else "N/A", ""],
+        ["", "Fachada (Base)", "", "", ""],
+        ["", dp_fechamento_0[26] if len(dp_fechamento_0) > 26 else "N/A", dp_fechamento_0[27] if len(dp_fechamento_0) > 27 else "N/A", dp_fechamento_0[28] if len(dp_fechamento_0) > 28 else "N/A", ""],
+        ["", "", "Base Inferior", "", ""],
+        ["", "", dp_fechamento_0[29] if len(dp_fechamento_0) > 29 else "N/A", "", ""],
+        ["", "", "Vento Perpendicular à Cumeeira com Cpi = -0,30", "", ""],
+        ["", "", dp_cobertura_0[3] if len(dp_cobertura_0) > 3 else "N/A", "", ""],  # Cobertura
+        ["", "Telhado", "", "", ""],
+        ["", dp_fechamento_0[30] if len(dp_fechamento_0) > 30 else "N/A", dp_fechamento_0[31] if len(dp_fechamento_0) > 31 else "N/A", dp_fechamento_0[32] if len(dp_fechamento_0) > 32 else "N/A", ""],
+        ["", "Fachada (Meio)", "", "", ""],
+        ["", dp_fechamento_0[33] if len(dp_fechamento_0) > 33 else "N/A", dp_fechamento_0[34] if len(dp_fechamento_0) > 34 else "N/A", dp_fechamento_0[35] if len(dp_fechamento_0) > 35 else "N/A", ""],
+        ["", "Fachada (Base)", "", "", ""],
+        ["", dp_fechamento_0[36] if len(dp_fechamento_0) > 36 else "N/A", dp_fechamento_0[37] if len(dp_fechamento_0) > 37 else "N/A", dp_fechamento_0[38] if len(dp_fechamento_0) > 38 else "N/A", ""],
+        ["", "", "Base Inferior", "", ""],
+        ["", "", dp_fechamento_0[39] if len(dp_fechamento_0) > 39 else "N/A", "", ""],
+    ]
+
+    # Criar tabelas com os dados
+    pressure_table_parallel = Table(pressure_parallel_cpi_0, colWidths=[1*cm, 2*cm, 2*cm, 2*cm, 1*cm])
+    pressure_table_parallel.setStyle(TableStyle([
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
-        # Bordas externas e internas
         ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        # Mesclar células para "Cobertura"
-        ('SPAN', (2,0), (4,0)),
-        ('SPAN', (2,1), (4,1)),
-        ('BACKGROUND', (2,0), (4,1), colors.lightgrey),
-        # Mesclar células para "Telhado"
-        ('SPAN', (1,2), (4,2)),
-        ('BACKGROUND', (1,2), (4,3), colors.whitesmoke),
-        # Mesclar células para "Fachada (Meio)"
-        ('SPAN', (1,4), (4,4)),
-        ('BACKGROUND', (1,4), (4,5), colors.whitesmoke),
-        # Mesclar células para "Fachada (Base)"
-        ('SPAN', (1,6), (4,6)),
-        ('BACKGROUND', (1,6), (4,7), colors.whitesmoke),
-        # Mesclar células para "Base Inferior"
-        ('SPAN', (2,8), (4,8)),
-        ('SPAN', (2,9), (4,9)),
-        ('BACKGROUND', (2,8), (4,9), colors.lightgrey),
-        # Ajustar padding
+        ('SPAN', (2,0), (4,0)), ('SPAN', (2,1), (4,1)), ('BACKGROUND', (2,0), (4,1), colors.lightgrey),
+        ('SPAN', (1,2), (4,2)), ('BACKGROUND', (1,2), (4,3), colors.whitesmoke),
+        ('SPAN', (1,4), (4,4)), ('BACKGROUND', (1,4), (4,5), colors.whitesmoke),
+        ('SPAN', (1,6), (4,6)), ('BACKGROUND', (1,6), (4,7), colors.whitesmoke),
+        ('SPAN', (2,8), (4,8)), ('SPAN', (2,9), (4,9)), ('BACKGROUND', (2,8), (4,9), colors.lightgrey),
+        ('SPAN', (2,10), (4,10)), ('SPAN', (2,11), (4,11)), ('BACKGROUND', (2,10), (4,11), colors.lightgrey),
+        ('SPAN', (1,12), (4,12)), ('BACKGROUND', (1,12), (4,13), colors.whitesmoke),
+        ('SPAN', (1,14), (4,14)), ('BACKGROUND', (1,14), (4,15), colors.whitesmoke),
+        ('SPAN', (1,16), (4,16)), ('BACKGROUND', (1,16), (4,17), colors.whitesmoke),
+        ('SPAN', (2,18), (4,18)), ('SPAN', (2,19), (4,19)), ('BACKGROUND', (2,18), (4,19), colors.lightgrey),
         ('LEFTPADDING', (0,0), (-1,-1), 5),
         ('RIGHTPADDING', (0,0), (-1,-1), 5),
     ]))
-    story.append(pressure_table)
+    story.append(pressure_table_parallel)
+    story.append(Spacer(1, 0.3*cm))
+
+    pressure_table_perpendicular = Table(pressure_perpendicular_cpi_0, colWidths=[1*cm, 2*cm, 2*cm, 2*cm, 1*cm])
+    pressure_table_perpendicular.setStyle(TableStyle([
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+        ('SPAN', (2,0), (4,0)), ('SPAN', (2,1), (4,1)), ('BACKGROUND', (2,0), (4,1), colors.lightgrey),
+        ('SPAN', (1,2), (4,2)), ('BACKGROUND', (1,2), (4,3), colors.whitesmoke),
+        ('SPAN', (1,4), (4,4)), ('BACKGROUND', (1,4), (4,5), colors.whitesmoke),
+        ('SPAN', (1,6), (4,6)), ('BACKGROUND', (1,6), (4,7), colors.whitesmoke),
+        ('SPAN', (2,8), (4,8)), ('SPAN', (2,9), (4,9)), ('BACKGROUND', (2,8), (4,9), colors.lightgrey),
+        ('SPAN', (2,10), (4,10)), ('SPAN', (2,11), (4,11)), ('BACKGROUND', (2,10), (4,11), colors.lightgrey),
+        ('SPAN', (1,12), (4,12)), ('BACKGROUND', (1,12), (4,13), colors.whitesmoke),
+        ('SPAN', (1,14), (4,14)), ('BACKGROUND', (1,14), (4,15), colors.whitesmoke),
+        ('SPAN', (1,16), (4,16)), ('BACKGROUND', (1,16), (4,17), colors.whitesmoke),
+        ('SPAN', (2,18), (4,18)), ('SPAN', (2,19), (4,19)), ('BACKGROUND', (2,18), (4,19), colors.lightgrey),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(pressure_table_perpendicular)
     story.append(Spacer(1, 0.5*cm))
 
     doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
