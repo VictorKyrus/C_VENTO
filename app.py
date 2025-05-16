@@ -158,8 +158,8 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
     # Seção 3: Parâmetros Meteorológicos
     story.append(Paragraph("3. Parâmetros Meteorológicos", heading_style))
     meteo_data = [
-        ["Velocidade Básica do Vento (V0)", f"{data['v0']:.1f} m/s"],
-        ["Categoria de Rugosidade", f"{data['category']} - {data['category_description']}"],
+        ["V0 (m/s)", f"{data['v0']:.1f} m/s"],
+        ["Categoria de Rugosidade", f"{data['category']}"],
         ["Classe", data['class_']]
     ]
     meteo_table = Table(meteo_data, colWidths=[5*cm, 10*cm])
