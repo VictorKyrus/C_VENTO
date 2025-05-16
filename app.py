@@ -132,11 +132,11 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
     # Seção 2: Dados da Edificação
     story.append(Paragraph("2. Dados da Edificação", heading_style))
     building_data = [
-        ["Comprimento (a)", f"{data['length']:.1f} m"],
-        ["Largura (b)", f"{data['width']:.1f} m"],
+        ["Comprimento (\( l_1 \))", f"{data['length']:.1f} m"],
+        ["Largura (\( l_2 \))", f"{data['width']:.1f} m"],
         ["Pé-Direito", f"{data['height']:.1f} m"],
         ["Inclinação da Cobertura", f"{data['slope']:.1f}%"],
-        ["Altura Média - Fechamento", f"{data['z_fechamento']:.1f} m"],
+        ["Altura Média - Fechamento (\( h \))", f"{data['z_fechamento']:.1f} m"],
         ["Altura Média - Cobertura", f"{data['z_cobertura']:.1f} m"],
         ["Distância Entre Pórticos", f"{data['portico_distance']:.1f} m"],
         ["Tipo de Cobertura", data['roof_type']]
@@ -367,6 +367,68 @@ def generate_pdf(data, results, project_info, wind_forces, uploaded_image=None):
         story.append(Image(img_buffer, width=12*cm, height=8*cm))
         story.append(Spacer(1, 0.5*cm))
 
+    # Seção 14: Força de Atrito Longitudinal (0° / 180°)
+    story.append(Paragraph("14. Força de Atrito Longitudinal (0° / 180°)", heading_style))
+    story.append(Paragraph("Para \( l_2 / h \) ou \( l_2 / l_1 \) maior do que 4:", body_style))
+    
+    # Usar valores do usuário
+    l1 = data['length']  # Comprimento
+    l2 = data['width']   # Largura
+    h = data['z_fechamento']  # Altura Média - Fechamento
+    Cfr = 0.04  # Valor fixo conforme NBR 6123
+    q_cob = results['q_cobertura_kgfm2']  # Pressão dinâmica da cobertura
+    q_fec = results['q_fechamento_kgfm2']  # Pressão dinâmica do fechamento
+    
+    # Verificação da condição
+    l2_h_ratio = l2 / h
+    l2_l1_ratio = l2 / l1
+    condition_met = l2_h_ratio > 4 or l2_l1_ratio > 4
+    
+    # Cálculo de F' dependendo da condição de h
+    if condition_met:
+        if h <= l1:
+            F_prime = Cfr * q_cob * l1 * (l2 - 4 * h) + Cfr * q_fec * 2 * h * (l2 - 4 * h)
+            F_cob = "Não Aplicável"  # Como especificado na imagem
+            F_fec = "Não Aplicável"  # Como especificado na imagem
+        else:
+            F_prime = Cfr * q_cob * l1 * (l2 - 4 * h) + Cfr * q_fec * 2 * h * (l2 - 4 * l1)
+            F_cob = "Não Aplicável"  # Como especificado na imagem
+            F_fec = "Não Aplicável"  # Como especificado na imagem
+    else:
+        F_prime = "Não Aplicável"
+        F_cob = "Não Aplicável"
+        F_fec = "Não Aplicável"
+    
+    # Dados para a tabela
+    friction_data = [
+        ["Parâmetro", "Valor"],
+        ["\( l_1 \)", f"{format_with_comma(l1)} m"],
+        ["\( l_2 \)", f"{format_with_comma(l2)} m"],
+        ["\( h \)", f"{format_with_comma(h)} m"],
+        ["\( l_2 / h \)", f"{format_with_comma(l2_h_ratio)}"],
+        ["\( l_2 / l_1 \)", f"{format_with_comma(l2_l1_ratio)}"],
+        ["\( C_{fr} \)", f"{format_with_comma(Cfr)}"],
+        ["\( q_{cob} \)", f"{format_with_comma(q_cob)} kgf/m²"],
+        ["\( q_{fec} \)", f"{format_with_comma(q_fec)} kgf/m²"],
+        ["\( F' \)", f"{format_with_comma(F_prime)} kgf" if F_prime != "Não Aplicável" else F_prime],
+        ["\( F'_{cob} \)", F_cob],
+        ["\( F'_{fec} \)", F_fec]
+    ]
+    
+    friction_table = Table(friction_data, colWidths=[5*cm, 5*cm])
+    friction_table.setStyle(TableStyle([
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
+        ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.white, colors.whitesmoke]),
+    ]))
+    story.append(friction_table)
+    story.append(Spacer(1, 0.5*cm))
+
     doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
     buffer.seek(0)
     return buffer
@@ -469,12 +531,12 @@ st.markdown('<div class="card"><div class="card-title">Dados da Edificação</di
 roof_type = st.selectbox("Tipo de Cobertura", ["Uma Água", "Duas Águas"], index=1)
 col1, col2 = st.columns(2)
 with col1:
-    length = st.number_input("Comprimento (m)", min_value=0.0, value=48.0)
-    width = st.number_input("Largura (m)", min_value=0.0, value=16.0)
+    length = st.number_input("Comprimento (\( l_1 \)) (m)", min_value=0.0, value=48.0)
+    width = st.number_input("Largura (\( l_2 \)) (m)", min_value=0.0, value=16.0)
     height = st.number_input("Pé-Direito (m)", min_value=0.0, value=10.9)
 with col2:
     slope = st.number_input("Inclinação da Cobertura (%)", min_value=0.0, value=10.0)
-    z_fechamento = st.number_input("Altura Média - Fechamento (m)", min_value=0.0, value=13.0)
+    z_fechamento = st.number_input("Altura Média - Fechamento (\( h \)) (m)", min_value=0.0, value=13.0)
     z_cobertura = st.number_input("Altura Média - Cobertura (m)", min_value=0.0, value=13.8)
 portico_distance = st.number_input("Distância Entre Pórticos (m)", min_value=0.0, value=5.0)
 st.markdown('</div>', unsafe_allow_html=True)
